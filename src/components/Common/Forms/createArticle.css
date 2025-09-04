@@ -58,7 +58,7 @@
     align-items: center;
 }
 
-.modalContent {
+.modal-content {
     background-color: #fefefe;
     padding: 20px;
     border: 1px solid #130c0c;
@@ -78,7 +78,7 @@
     cursor: pointer;
 }
 
-.close:hover
+.close:hover,
 .close:focus {
     color: black;   
 }

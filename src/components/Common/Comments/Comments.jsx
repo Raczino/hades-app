@@ -102,20 +102,32 @@ const CommentList = ({ articleId }) => {
                     <div className='Main'>
                         <p className='content'>{comment.content}</p>
                         <div className='delete-icon'>
-                            {comment.author.id === parseInt(localStorage.userId) && (
-                                <TrashIcon onClick={() => handleDeleteClick(comment.id)}></TrashIcon>
+                            {comment.author.id === Number(localStorage.userId) && (
+                                <TrashIcon onClick={() => handleDeleteClick(comment.id)} disabled={loading}></TrashIcon>
                             )}
                         </div>
                     </div>
                     <div className="author-container">
                         <p className='likes'>{"Likes: " + comment.likesNumber}</p>
-                        <button className={`like-button ${comment.liked ? 'liked' : ''}`} onClick={() => handleLikeClick(comment.id, comment.liked)}>
+                        <button
+                            className={`like-button ${comment.liked ? 'liked' : ''}`}
+                            onClick={() => handleLikeClick(comment.id, comment.liked)}
+                            disabled={loading}
+                        >
                             {comment.liked ? 'Liked' : 'Like'}
                         </button>
-                        <button className='author-button' onClick={() => handleAuthorClick(comment.author.id)}>
+                        <button
+                            className='author-button'
+                            onClick={() => handleAuthorClick(comment.author.id)}
+                            disabled={loading}
+                        >
                             {comment.author ? `${comment.author.firstName} ${comment.author.lastName}` : 'Unknown'}
                         </button>
-                        <p className='date'>{comment.updated ? `Edited: ${dateFormat(comment.updatedAt)}` : `Posted: ${dateFormat(comment.postedDate)}`}</p>
+                        <p className='date'>
+                            {comment.updatedAt
+                                ? `Edited: ${dateFormat(comment.updatedAt)}`
+                                : `Posted: ${dateFormat(comment.postedDate)}`}
+                        </p>
                     </div>
                 </div>
             ))}

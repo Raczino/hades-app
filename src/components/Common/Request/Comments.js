@@ -12,12 +12,12 @@ export const getComments = async (articleId) => {
     return response.json();
 };
 
-export const likeComment = async (articleId) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/like?id=${articleId}`, {
+export const likeComment = async (commentId) => {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/like?id=${commentId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
     if (!response.ok) {
@@ -26,12 +26,12 @@ export const likeComment = async (articleId) => {
     return response;
 };
 
-export const deleteComment = async (articleId) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/delete?id=${articleId}`, {
+export const deleteComment = async (commentId) => {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/delete?id=${commentId}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
     if (!response.ok) {
@@ -41,7 +41,7 @@ export const deleteComment = async (articleId) => {
 };
 
 export const getCommentsForUser = async (userId) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/user?id=${userId}`, {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/user?userId=${userId}&page=1&size=10`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -55,11 +55,10 @@ export const getCommentsForUser = async (userId) => {
 };
 
 async function interceptedFetch(url, options) {
-    
     const response = await fetch(url, options);
 
-    if (response.status === 401) {
-        window.location = '/login'
+    if (response.status === 401 || response.status === 403) {
+        window.location = '/login';
     }
     return response
 }

@@ -41,27 +41,53 @@ const CreateArticleForm = () => {
         //navigate('/articles');
     };
 
+    const handleKeyDown = (event) => {
+        if (event.ctrlKey && event.key === 'Enter' && title.trim() && content.trim()) {
+            handleSubmit(event);
+        }
+    };
+
     return (
         <>
             <form onSubmit={handleSubmit}>
                 <div className='formContainer'>
                     <div>
                         <label className='label'>Title:</label>
-                        <input className='titleInput' type='text' value={title} onChange={handleTitleChange} required />
+                        <input
+                            className='titleInput'
+                            type='text'
+                            value={title}
+                            onChange={handleTitleChange}
+                            required
+                        />
                     </div>
                     <div>
                         <label className='label'>Content:</label>
-                        <textarea className='contentInput' rows="4" cols="50" value={content} onChange={handleContentChange} required />
+                        <textarea
+                            className='contentInput'
+                            rows="4"
+                            cols="50"
+                            value={content}
+                            onChange={handleContentChange}
+                            onKeyDown={handleKeyDown}
+                            required
+                        />
                     </div>
                     <div className='formButtons'>
                         <button className='closeForm' type='button' onClick={handleCancel}>Cancel</button>
-                        <button className='create' type='submit'>CREATE</button>
+                        <button
+                            className='create'
+                            type='submit'
+                            disabled={!title.trim() || !content.trim()}
+                        >
+                            CREATE
+                        </button>
                     </div>
                 </div>
             </form>
             {showModal && (
                 <div className="modal">
-                    <div className="modalContent">
+                    <div className="modal-content">
                         <span className="close" onClick={handleCloseModal}>&times;</span>
                         <p>Artykuł został dodany!</p>
                         <p>ale nie zobaczysz go jeszcze w systemie, twój artykuł oczekuje na przegląd i potwierdzenie przez moderatora.</p>

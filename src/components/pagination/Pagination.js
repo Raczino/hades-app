@@ -20,16 +20,18 @@ const Pagination = ({
         let start = 0;
         let end = 5;
 
-        if (currentPage > 3) {
-            start = currentPage - 3;
-            end = currentPage + 2;
-        }
-        if (currentPage === totalPages) {
+        if (totalPages <= 5) {
+            start = 0;
+            end = totalPages;
+        } else if (currentPage <= 3) {
+            start = 0;
+            end = 5;
+        } else if (currentPage + 2 >= totalPages) {
             start = totalPages - 5;
             end = totalPages;
-        }
-        if (totalPages < 5) {
-            end = totalPages;
+        } else {
+            start = currentPage - 3;
+            end = currentPage + 2;
         }
 
         return pageNumbers.slice(Math.max(start, 0), Math.min(end, totalPages));

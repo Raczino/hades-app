@@ -118,7 +118,7 @@ const ArticleList = () => {
 
     return (
         <div className='article-list'>
-            <h1 className='aritcle-list-title'>Lista Artykułów</h1>
+            <h1 className='article-list-title'>Lista Artykułów</h1>
             <div className="filters-container">
                 <div className="filter">
                     <label htmlFor="articles-per-page">Artykułów na stronie:</label>
@@ -176,9 +176,11 @@ const ArticleList = () => {
                         )}
                     </div>
                     {selectedArticle === article && (
-                        <CommentList articleId={article.id} comments={article.comments} />
+                        <CommentList articleId={article.id} />
                     )}
-                    <CommentForm articleId={article.id} updateComments={updateComments} />
+                    {localStorage.getItem('token') &&
+                        <CommentForm articleId={article.id} updateComments={updateComments} />
+                    }
                 </div>
             ))}
             {totalPages > 1 && (
@@ -187,7 +189,6 @@ const ArticleList = () => {
                     totalItems={totalArticles}
                     paginate={paginate}
                     currentPage={currentPage}
-                    totalPages={totalPages}
                     className="custom-pagination"
                 />
             )}

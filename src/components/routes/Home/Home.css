@@ -1,15 +1,12 @@
-.home-route {
-    background-color: violet;
-}
-
 .main {
     height: 100vh;
-    width: 100vh;
+    width: 100vw;
     background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
 }
 
 .navButtons {
     width: 300px;
+    padding: 10px 0;
 }
 
 .navButtons .button {

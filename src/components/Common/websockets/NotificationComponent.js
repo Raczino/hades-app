@@ -10,6 +10,7 @@ const NotificationComponent = () => {
     const [highlightedNotificationIds, setHighlightedNotificationIds] = useState([]);
 
     const fetchNotifications = async () => {
+        if (!userId) return;
         try {
             const data = await getUserNotifications(userId);
             setNotifications(data);
@@ -19,6 +20,7 @@ const NotificationComponent = () => {
     };
 
     useEffect(() => {
+        if (!userId) return;
         fetchNotifications();
 
         const client = new Client({
@@ -49,6 +51,9 @@ const NotificationComponent = () => {
             onStompError: (frame) => {
                 console.error('Broker reported error: ', frame.headers['message']);
                 console.error('Additional details: ', frame.body);
+                if (frame.headers['message'] && frame.headers['message'].includes('Unauthorized')) {
+                    window.location = '/login';
+                }
             }
         });
 
@@ -71,7 +76,7 @@ const NotificationComponent = () => {
 
     const closeModal = () => {
         setModalOpen(false);
-        window.location.reload();
+        // fetchNotifications(); // Odśwież powiadomienia bez reloadu strony
     };
 
     const unreadCount = notifications.filter(notification => !notification.read).length;

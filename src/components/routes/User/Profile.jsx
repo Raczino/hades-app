@@ -3,8 +3,15 @@ import { useLocation } from 'react-router-dom';
 import TrashIcon from '../../../components/Common/Comments/trash.jsx';
 import './profile.css';
 import { deleteArticle, getArticleForUser, getPendingArticlesForUser } from '../../Common/Request/Requests';
-import { getCommentsForUser } from '../../Common/Request/Comments.js';
+import { getCommentsForUser, deleteComment } from '../../Common/Request/Comments.js';
 import { dateFormat } from '../../Common/Patterns/DatePattern.js';
+
+const TABS = [
+    { key: 'comments', label: 'Komentarze' },
+    { key: 'articles', label: 'Artykuły' },
+    { key: 'followers', label: 'Obserwujący' },
+    { key: 'following', label: 'Obserwowani' }
+];
 
 const Profile = () => {
     const location = useLocation();
@@ -20,6 +27,7 @@ const Profile = () => {
     const [showComments, setShowComments] = useState(false);
     const [isFollowing, setIsFollowing] = useState(authorData.isFollowing || false);
     const [activeTab, setActiveTab] = useState('accepted');
+    const [activeSideTab, setActiveSideTab] = useState('comments');
 
     const loggedInUserId = localStorage.getItem('userId');
 
@@ -50,6 +58,22 @@ const Profile = () => {
             setArticles(data);
         } catch (error) {
             console.error('Error fetching pending articles:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteCommentClick = async (commentId) => {
+        try {
+            setLoading(true);
+            const response = await deleteComment(commentId);
+            if (response.ok) {
+                setCommentsData(prev => prev.filter(comment => comment.id !== commentId));
+            } else {
+                console.error('Failed to delete comment:', response);
+            }
+        } catch (error) {
+            console.error('Error deleting comment:', error);
         } finally {
             setLoading(false);
         }
@@ -118,7 +142,7 @@ const Profile = () => {
         setLoading(true);
         try {
             if (showFollowers) {
-                setFollowersData(false);
+                setShowFollowers(false); // poprawiono
                 return;
             }
             const response = await fetch(`http://localhost:8080/api/v1/users/${authorData.id}/followers`, {
@@ -202,151 +226,191 @@ const Profile = () => {
         }
     };
 
-    return (
-        <div className="profile-container">
-            {loggedInUserId != authorData.id && (
-                <div className="profile-info">
-                    <button
-                        className={isFollowing ? 'follow-button following' : 'follow-button'}
-                        onClick={handleFollowClick}
-                        disabled={loading}
-                    >
-                        {loading ? '...' : isFollowing ? 'Obserwujesz' : 'Obserwuj'}
-                    </button>
-                </div>
-            )}
-            <div className='content-section profile-stats'>
-                <div className="profile-info">
-                    <strong>Imię Nazwisko:</strong>
-                    <p>{authorData.firstName} {authorData.lastName}</p>
-                </div>
-                <div className="profile-info">
-                    <strong>E-mail:</strong>
-                    <p>{authorData.email}</p>
-                </div>
-                <div className="profile-info">
-                    <strong>Role:</strong>
-                    <p>{authorData.userRole}</p>
-                </div>
-                <div className="profile-info">
-                    <strong>Comments:</strong>
-                    <button className='counter' onClick={handleCommentsClick}>
-                        {authorData.commentsCount}
-                    </button>
-                </div>
-                <div className="profile-info">
-                    <strong>Articles:</strong>
-                    <button className='counter' onClick={handleArticlesClick}>
-                        {authorData.articlesCount}
-                    </button>
-                </div>
-                <div className="profile-info">
-                    <strong>Followers:</strong>
-                    <button className='counter' onClick={handleFollowersClick}>
-                        {authorData.followersCount}
-                    </button>
-                </div>
-                <div className="profile-info">
-                    <strong>Following:</strong>
-                    <button className='counter' onClick={handleFollowingClick}>
-                        {authorData.followsCount}
-                    </button>
+    // Obsługa kliknięcia w zakładkę boczną
+    const handleSideTabClick = async (tabKey) => {
+        setActiveSideTab(tabKey);
+        setLoading(true);
+        try {
+            if (tabKey === 'comments') {
+                const data = await getCommentsForUser(authorData.id);
+                setCommentsData(data);
+            } else if (tabKey === 'articles') {
+                setActiveTab('accepted');
+                const data = await getArticleForUser(authorData.id);
+                setArticles(data);
+            } else if (tabKey === 'followers') {
+                const response = await fetch(`http://localhost:8080/api/v1/users/${authorData.id}/followers`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.token}`,
+                    },
+                });
+                if (!response.ok) throw new Error('Failed to fetch followers');
+                const data = await response.json();
+                setFollowersData(data);
+            } else if (tabKey === 'following') {
+                const response = await fetch(`http://localhost:8080/api/v1/users/${authorData.id}/following`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.token}`,
+                    },
+                });
+                if (!response.ok) throw new Error('Failed to fetch following');
+                const data = await response.json();
+                setFollowingData(data);
+            }
+        } catch (error) {
+            console.error('Error fetching tab data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!authorData) {
+        return (
+            <div className="profile-container">
+                <div className="profile-card">
+                    <h2>Brak danych użytkownika</h2>
+                    <p>Odśwież stronę z listy użytkowników.</p>
                 </div>
             </div>
+        );
+    }
 
-            {loading && <p>Loading...</p>}
-
-            {showFollowers ? (followersData.length > 0 ? (
-                <div className='followers-list'>
-                    <h1 className='list-title'>Lista Obserwujących</h1>
-                    {followersData.map((follower) => (
-                        <div key={follower.id} className="follower-card">
-                            <h3>Imie Nazwisko: {follower.firstName} {follower.lastName}</h3>
-                            <p>Email: {follower.email}</p>
-                        </div>
-                    ))}
+    return (
+        <div className="profile-container">
+            <div className="profile-header">
+                <div className="avatar">
+                    <span>{authorData.firstName[0]}{authorData.lastName[0]}</span>
                 </div>
-            ) : (
-                <p>Nikt Cie jeszcze nie obserwuje</p>
-            )
-            ) : null}
-
-            {showFollowing ? (followingData.length > 0 ? (
-                <div className='following-list'>
-                    <h1 className='list-title'>Lista Obserwowanych</h1>
-                    {followingData.map((following) => (
-                        <div key={following.id} className="follower-card">
-                            <h3>{following.firstName} {following.lastName}</h3>
-                            <p>Email: {following.email}</p>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <p>Nie obserwujesz jeszcze nikogo.</p>
-            )
-            ) : null}
-
-            {showComments && commentsData.length > 0 && (
-                <div className='article-list'>
-                    <h1 className='list-title'>Lista Komentarzy</h1>
-                    {commentsData.map((comment, index) => (
-                        <div key={comment.id} className={`MyComment comment-${index + 1}`}>
-                            <TrashIcon onClick={() => handleDeleteClick()} />
-                            <p className='content'>{comment.content}</p>
-                            <div className="comment-info"> {/* Nowa klasa dla info komentarzy */}
-                                <p>Likes: {comment.likesNumber}</p>
-                                <p>Posted: {dateFormat(comment.postedDate)}</p>
-                            </div>
-                        </div>
-
-                    ))}
-                </div>
-            )}
-
-            {loading && <p>Loading...</p>}
-
-            {showArticles && articles && (
-                <div className='article-list'>
-                    {loggedInUserId == authorData.id && (<div className="tabs">
+                <div className="profile-main-info">
+                    <h2>{authorData.firstName} {authorData.lastName}</h2>
+                    <p className="profile-role">{authorData.userRole}</p>
+                    <p className="profile-email">{authorData.email}</p>
+                    {loggedInUserId != authorData.id && (
                         <button
-                            className={activeTab === 'accepted' ? 'tab active' : 'tab'}
-                            onClick={() => setActiveTab('accepted')}
+                            className={isFollowing ? 'follow-button following' : 'follow-button'}
+                            onClick={handleFollowClick}
                             disabled={loading}
                         >
-                            Artykuły
+                            {loading ? '...' : isFollowing ? 'Obserwujesz' : 'Obserwuj'}
                         </button>
+                    )}
+                </div>
+            </div>
+            <div className="profile-content">
+                <div className="profile-tabs">
+                    {TABS.map(tab => (
                         <button
-                            className={activeTab === 'pending' ? 'tab active pending' : 'tab'}
-                            onClick={() => setActiveTab('pending')}
-                            disabled={loading}
+                            key={tab.key}
+                            className={`side-tab${activeSideTab === tab.key ? ' active' : ''}`}
+                            onClick={() => handleSideTabClick(tab.key)}
                         >
-                            Oczekujące
+                            {tab.label}
+                            {tab.key === 'comments' && authorData.commentsCount > 0 && (
+                                <span className="tab-count">{authorData.commentsCount}</span>
+                            )}
+                            {tab.key === 'articles' && authorData.articlesCount > 0 && (
+                                <span className="tab-count">{authorData.articlesCount}</span>
+                            )}
+                            {tab.key === 'followers' && authorData.followersCount > 0 && (
+                                <span className="tab-count">{authorData.followersCount}</span>
+                            )}
+                            {tab.key === 'following' && authorData.followsCount > 0 && (
+                                <span className="tab-count">{authorData.followsCount}</span>
+                            )}
                         </button>
-                    </div>
-                    )}
-                    {showArticles && articles.length>0 ? (
-                        <h1 className='list-title'>Lista Artykułów</h1>
-                    ):
-                    (
-                        <p>Nie masz oczekujących artykułów.</p>
-                    )}
-                    {articles.map((article, index) => (
-                        <div key={article.id} className={`MyArticle article-${index + 1}`}>
-                            <div className="title-container">
-                                <h2 className='title'>{article.title}</h2>
-                                <TrashIcon onClick={() => handleDeleteClick(article.id)} />
-                            </div>
-                            <p className='content'>{article.content}</p>
-                            <div className="article-info">
-                                <p>Liczba polubień: {article.likesCount}</p>
-                                <p>Data Publikcji: {dateFormat(article.postedDate)}</p>
-                                <p>Status: {article.status}</p>
-                                <p>Liczba komentarzy: {article.commentsNumber}</p>
-                            </div>
-                        </div>
                     ))}
                 </div>
-            )}
+                <div className="profile-list-card">
+                    {loading && <p>Loading...</p>}
+                    {activeSideTab === 'followers' && (
+                        <div className='followers-list'>
+                            <h1 className='list-title'>Lista Obserwujących</h1>
+                            {followersData.length > 0 ? followersData.map((follower) => (
+                                <div key={follower.id} className="follower-card">
+                                    <h3>{follower.firstName} {follower.lastName}</h3>
+                                    <p>{follower.email}</p>
+                                </div>
+                            )) : <p>Nikt Cię jeszcze nie obserwuje</p>}
+                        </div>
+                    )}
+                    {activeSideTab === 'following' && (
+                        <div className='following-list'>
+                            <h1 className='list-title'>Lista Obserwowanych</h1>
+                            {followingData.length > 0 ? followingData.map((following) => (
+                                <div key={following.id} className="follower-card">
+                                    <h3>{following.firstName} {following.lastName}</h3>
+                                    <p>{following.email}</p>
+                                </div>
+                            )) : <p>Nie obserwujesz jeszcze nikogo.</p>}
+                        </div>
+                    )}
+                    {activeSideTab === 'comments' && (
+                        <div className='comments-list'>
+                            <h1 className='list-title'>Lista Komentarzy</h1>
+                            {(Array.isArray(commentsData.items) ? commentsData.items : commentsData).length > 0 ? (
+                                (Array.isArray(commentsData.items) ? commentsData.items : commentsData).map((comment, index) => (
+                                    <div key={comment.id} className={`MyComment comment-${index + 1}`}>
+                                        <TrashIcon onClick={() => handleDeleteCommentClick(comment.id)} />
+                                        <p className='content'>{comment.content}</p>
+                                        <div className="comment-info">
+                                            <p>Likes: {comment.likesNumber}</p>
+                                            <p>Posted: {dateFormat(comment.postedDate)}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p>Brak komentarzy.</p>
+                            )}
+                        </div>
+                    )}
+                    {activeSideTab === 'articles' && (
+                        <div className='articles-list'>
+                            <h1 className='list-title'>Lista Artykułów</h1>
+                            {loggedInUserId == authorData.id && (
+                                <div className="tabs">
+                                    <button
+                                        className={activeTab === 'accepted' ? 'tab active' : 'tab'}
+                                        onClick={() => setActiveTab('accepted')}
+                                        disabled={loading}
+                                    >
+                                        Artykuły
+                                    </button>
+                                    <button
+                                        className={activeTab === 'pending' ? 'tab active pending' : 'tab'}
+                                        onClick={() => setActiveTab('pending')}
+                                        disabled={loading}
+                                    >
+                                        Oczekujące
+                                    </button>
+                                </div>
+                            )}
+                            {(Array.isArray(articles.items) ? articles.items : articles).length > 0 ? (
+                                (Array.isArray(articles.items) ? articles.items : articles).map((article, index) => (
+                                    <div key={article.id} className={`MyArticle article-${index + 1}`}>
+                                        <div className="title-container">
+                                            <h2 className='title'>{article.title}</h2>
+                                            <TrashIcon onClick={() => handleDeleteClick(article.id)} />
+                                        </div>
+                                        <p className='content'>{article.content}</p>
+                                        <div className="article-info">
+                                            <p>Liczba polubień: {article.likesCount}</p>
+                                            <p>Data Publikacji: {dateFormat(article.postedDate)}</p>
+                                            <p>Status: {article.status}</p>
+                                            <p>Liczba komentarzy: {article.commentsNumber}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p>Nie masz oczekujących artykułów.</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

@@ -67,6 +67,11 @@ button{
 button:hover{
 	background: #6d44b8;
 }
+button:disabled {
+	background: #bbb;
+	cursor: not-allowed;
+	opacity: 0.7;
+}
 .login{
 	height: 460px;
 	background: #eee;
@@ -88,4 +93,15 @@ button:hover{
 }
 #chk:checked ~ .signup label{
 	transform: scale(.6);
+}
+
+.error {
+	color: #d32f2f;
+	background: #fff0f0;
+	border-radius: 5px;
+	padding: 8px;
+	margin: 10px auto;
+	width: 80%;
+	text-align: center;
+	font-weight: bold;
 }

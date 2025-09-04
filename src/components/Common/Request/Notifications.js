@@ -3,13 +3,16 @@ export const markNotificationAsRead = async (notificationId) => {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
+    if (response.status === 401 || response.status === 403) {
+        window.location = '/login';
+    }
     if (!response.ok) {
         throw new Error('Failed to fetch read notification', response);
     }
-    return response
+    return response;
 };
 
 export const getUserNotifications = async (userId) => {
@@ -17,11 +20,14 @@ export const getUserNotifications = async (userId) => {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
+    if (response.status === 401 || response.status === 403) {
+        window.location = '/login';
+    }
     if (!response.ok) {
         throw new Error('Failed to fetch get notification', response);
     }
-    return response.json()
+    return response.json();
 };

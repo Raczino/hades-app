@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import './CreateComment.css';
-import CommentList from './Comments';
 
 const CommentForm = ({ articleId, updateComments }) => {
     const [commentContent, setCommentContent] = useState('');
@@ -26,7 +25,7 @@ const CommentForm = ({ articleId, updateComments }) => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.token}`,
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
                 body: JSON.stringify({
                     id: articleId,
@@ -52,6 +51,12 @@ const CommentForm = ({ articleId, updateComments }) => {
         setIsTextareaActive(false);
     };
 
+    const handleKeyDown = (event) => {
+        if (event.ctrlKey && event.key === 'Enter' && commentContent.trim()) {
+            handleSaveComment();
+        }
+    };
+
     return (
         <div className="comment-form">
             <textarea
@@ -60,12 +65,19 @@ const CommentForm = ({ articleId, updateComments }) => {
                 onChange={handleCommentChange}
                 onFocus={handleTextareaFocus}
                 onBlur={handleTextareaBlur}
+                onKeyDown={handleKeyDown}
                 placeholder='Write comment'
             />
             {commentContent && (
                 <div className="button-group">
                     <button className="Comment-cancel" onClick={handleCancelComment}>Cancel</button>
-                    <button className="Comment-save" onClick={handleSaveComment}>Save</button>
+                    <button
+                        className="Comment-save"
+                        onClick={handleSaveComment}
+                        disabled={!commentContent.trim()}
+                    >
+                        Save
+                    </button>
                 </div>
             )}
         </div>

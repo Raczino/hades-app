@@ -2,18 +2,16 @@ import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import {
   QueryClient,
   QueryClientProvider,
-  useQuery,
 } from '@tanstack/react-query'
-import Home from './components/routes/Home'
-import LogIn from './components/routes/LogIn'
-import Profile  from './components/routes/User';
+import Home from './components/routes/Home/Home.jsx';
+import LogIn from './components/routes/LogIn/LogIn.jsx';
+import Profile  from './components/routes/User/Profile.jsx';
 import './App.css';
-import ArticleList from "./components/routes/Articles";
-import CreateArticleForm from "./components/Common/Forms/createArticle";
+import ArticleList from "./components/routes/Articles/Articles.jsx";
+import CreateArticleForm from "./components/Common/Forms/createArticle.jsx";
 
 const router = createBrowserRouter([
   {

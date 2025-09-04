@@ -10,6 +10,7 @@ const Home = () => {
     const [userName, setUserName] = useState(null);
     
     const fetchUserData = async () => {
+        if (!localStorage.getItem('userId')) return;
         try {
             const data = await getUser(localStorage.userId);
             setUserName(data.firstName);
@@ -43,7 +44,7 @@ const Home = () => {
 
     return (
         <div className="home">
-            <h1 className="main-copy">Witaj, {userName}</h1>
+            <h1 className="main-copy">Witaj, {userName || "Gość"}</h1>
             <div className="navButtons">
                 <button className="button" onClick={goToArticles}>Explore</button>
                 <button className="button" >My Board</button>
