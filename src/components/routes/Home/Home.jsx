@@ -3,28 +3,37 @@ import { useNavigate } from 'react-router-dom';
 import './Home.css';
 import { getUser } from '../../Common/Request/Requests';
 import NotificationComponent from '../../Common/websockets/NotificationComponent';
+import ProfileHeader from '../User/ProfileHeader';
 
 const Home = () => {
+    console.log('Home rendered'); // sprawdź czy pojawia się dwa razy
+
     const navigate = useNavigate();
     const [userData, setUserData] = useState(null);
     const [userName, setUserName] = useState(null);
-    
-    const fetchUserData = async () => {
-        if (!localStorage.getItem('userId')) return;
-        try {
-            const data = await getUser(localStorage.userId);
-            setUserName(data.firstName);
-            setUserData(data);
-        } catch (error) {
-            console.error('Error fetching user data:', error);
-        }
-    };
+    const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+    const [notificationCount, setNotificationCount] = useState(0);
 
     useEffect(() => {
+        if (userData) return; // nie pobieraj ponownie jeśli już masz usera
+        const fetchUserData = async () => {
+            if (!localStorage.getItem('userId')) return;
+            try {
+                const data = await getUser(localStorage.getItem('userId'));
+                setUserName(data.firstName);
+                setUserData(data);
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        };
         fetchUserData();
-    }, []);
+    }, [userData]);
 
     const goToArticles = () => {
+        navigate('/articles');
+    };
+
+     const goToHome = () => {
         navigate('/articles');
     };
 
@@ -44,15 +53,28 @@ const Home = () => {
 
     return (
         <div className="home">
-            <h1 className="main-copy">Witaj, {userName || "Gość"}</h1>
-            <div className="navButtons">
-                <button className="button" onClick={goToArticles}>Explore</button>
-                <button className="button" >My Board</button>
-                <button className="button" onClick={() => goToCreateArticle()}>Create Article</button>
-                <button className="button" onClick={() => goToProfile()}>Your profile</button>
-                <button className="button" onClick={logOut}>Log out</button>
-            </div> 
-            <NotificationComponent/> 
+            <ProfileHeader
+                user={userData}
+                onHome={goToHome}
+                onExplore={goToArticles}
+                onCreateArticle={goToCreateArticle}
+                onProfile={goToProfile}
+                onLogout={logOut}
+                notificationCount={notificationCount}
+                onNotificationClick={() => setNotificationModalOpen(true)}
+            />
+            <NotificationComponent
+                userId={userData?.id}
+                open={notificationModalOpen}
+                onClose={() => setNotificationModalOpen(false)}
+                setNotificationCount={setNotificationCount}
+            />
+            <div className="home-board-content">
+                {/* Tu będą wyświetlane artykuły obserwowanych osób (My Board) */}
+                <h2>My Board</h2>
+                <p>W tej sekcji będą wyświetlane artykuły osób, które obserwujesz.</p>
+                {/* Przykład: <ArticleList articles={followedArticles} /> */}
+            </div>
         </div>
     );
 }

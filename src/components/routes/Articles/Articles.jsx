@@ -1,25 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import './Articles.css';
 import { useNavigate } from 'react-router-dom';
+import ProfileHeader from '../User/ProfileHeader';
+import NotificationComponent from '../../Common/websockets/NotificationComponent';
 import CommentList from '../../Common/Comments/Comments';
 import CommentForm from '../../Common/Comments/CommentForm';
 import { dateFormat } from '../../Common/Patterns/DatePattern';
 import { getArticles, getUser, likeArticle } from '../../Common/Request/Requests';
 import Pagination from '../../pagination/Pagination';
+import { FaThumbsUp } from 'react-icons/fa';
+import './Articles.css';
 
-const ArticleList = () => {
+const Articles = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(true);
+    const [userData, setUserData] = useState(null);
+    const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+    const [notificationCount, setNotificationCount] = useState(0);
     const [articles, setArticles] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [totalArticles, setTotalArticles] = useState(0);
     const [totalPages, setTotalPages] = useState();
     const [currentPage, setCurrentPage] = useState(1);
     const [articlesPerPage, setArticlesPerPage] = useState(10);
-    const [sortField, setSortField] = useState('postedDate');
+    const [sortField, setSortField] = useState('likesCount');
     const [sortOrder, setSortOrder] = useState('desc');
 
     useEffect(() => {
+        const fetchUser = async () => {
+            if (!localStorage.getItem('userId')) return;
+            try {
+                const data = await getUser(localStorage.getItem('userId'));
+                setUserData(data);
+            } catch (error) {
+                setUserData(null);
+            }
+        };
+
         const fetchArticles = async () => {
             try {
                 setLoading(true);
@@ -35,6 +51,7 @@ const ArticleList = () => {
             }
         };
 
+        fetchUser();
         fetchArticles();
     }, [currentPage, articlesPerPage, sortField, sortOrder]);
 
@@ -112,78 +129,124 @@ const ArticleList = () => {
         setCurrentPage(1);
     };
 
+    const goToArticles = () => navigate('/articles');
+    const goToHome = () => navigate('/home');
+    const goToProfile = () => navigate('/profile', { state: { authorData: userData } });
+    const logOut = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        navigate('/login');
+    };
+    const goToCreateArticle = () => navigate('/create');
+
     if (loading) {
         return <p>Loading articles...</p>;
     }
 
     return (
-        <div className='article-list'>
-            <h1 className='article-list-title'>Lista Artykułów</h1>
-            <div className="filters-container">
-                <div className="filter">
-                    <label htmlFor="articles-per-page">Artykułów na stronie:</label>
-                    <select id="articles-per-page" value={articlesPerPage} onChange={handleArticlesPerPageChange}>
-                        <option value={10}>10</option>
-                        <option value={15}>15</option>
-                        <option value={20}>20</option>
-                    </select>
-                </div>
-
-                <div className="filter">
-                    <label htmlFor="sort-field">Sortuj według:</label>
-                    <select id="sort-field" value={sortField} onChange={handleSortFieldChange}>
-                        <option value="postedDate">Data publikacji</option>
-                        <option value="likesNumber">Liczba polubień</option>
-                    </select>
-                </div>
-
-                <div className="filter">
-                    <label htmlFor="sort-order">Kierunek:</label>
-                    <select id="sort-order" value={sortOrder} onChange={handleSortOrderChange}>
-                        <option value="asc">Rosnąco</option>
-                        <option value="desc">Malejąco</option>
-                    </select>
-                </div>
-            </div>
-            {articles.map((article) => (
-                <div key={article.id} className={`article ${article.pinned ? 'pinned' : ''}`}>
-                    <h2 className='title'>{article.title}</h2>
-                    <p className='content'>{article.content}</p>
-                    <div className="author-container">
-                        <button
-                            className='article-author-button'
-                            onClick={() => handleAuthorClick(article.author.id)}
-                            disabled={loading}
-                        >
-                            {loading ? 'Loading...' : `${article.author.firstName} ${article.author.lastName}`}
-                        </button>
-                        <p className='article-author-date'>{dateFormat(article.postedDate)}</p>
+        <div className="explore">
+            <ProfileHeader
+                user={userData}
+                onHome={goToHome}
+                onExplore={goToArticles}
+                onCreateArticle={goToCreateArticle}
+                onProfile={goToProfile}
+                onLogout={logOut}
+                notificationCount={notificationCount}
+                onNotificationClick={() => setNotificationModalOpen(true)}
+            />
+            <NotificationComponent
+                userId={userData?.id}
+                open={notificationModalOpen}
+                onClose={() => setNotificationModalOpen(false)}
+                setNotificationCount={setNotificationCount}
+            />
+            <div className="explore-content">
+                <div className="explore-header-row">
+                    <h2>Explore</h2>
+                    <div className="filters-container">
+                        <div className="filter">
+                            <label htmlFor="articlesPerPage">Ilość na stronę</label>
+                            <select
+                                id="articlesPerPage"
+                                value={articlesPerPage}
+                                onChange={handleArticlesPerPageChange}
+                            >
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                            </select>
+                        </div>
+                        <div className="filter">
+                            <label htmlFor="sortField">Sortuj po</label>
+                            <select
+                                id="sortField"
+                                value={sortField}
+                                onChange={handleSortFieldChange}
+                            >
+                                <option value="likesCount">Liczba polubień</option>
+                                <option value="postedDate">Data dodania</option>
+                            </select>
+                        </div>
+                        <div className="filter">
+                            <label htmlFor="sortOrder">Kierunek</label>
+                            <select
+                                id="sortOrder"
+                                value={sortOrder}
+                                onChange={handleSortOrderChange}
+                            >
+                                <option value="desc">Malejąco</option>
+                                <option value="asc">Rosnąco</option>
+                            </select>
+                        </div>
                     </div>
-                    <div className="likes-container">
-                        <p className='likes'>{"Likes: " + article.likesCount}</p>
-                        <button
-                            type="button"
-                            className={`like-button ${article.liked ? 'liked' : ''}`}
-                            onClick={(event) => handleLikeClick(event, article.id)}
-                            disabled={loading}
-                        >
-                            {article.liked ? 'Liked' : 'Like'}
-                        </button>
-                        {article.commentsNumber > 0 && (
-                            <button className='comment-button' onClick={() => toggleComments(article)}>
-                                {selectedArticle === article ? 'Close' : `Comments (${article.commentsNumber})`}
-                            </button>
-                        )}
-                    </div>
-                    {selectedArticle === article && (
-                        <CommentList articleId={article.id} />
-                    )}
-                    {localStorage.getItem('token') &&
-                        <CommentForm articleId={article.id} updateComments={updateComments} />
-                    }
                 </div>
-            ))}
-            {totalPages > 1 && (
+                {articles.length > 0 ? (
+                    articles.map(article => (
+                        <div key={article.id} className={`article ${article.pinned ? 'pinned' : ''}`}>
+                            <h3 className='title'>{article.title}</h3>
+                            <p className='content'>{article.content}</p>
+                            <div className="likes-container">
+                                <span className="likes">
+                                    <FaThumbsUp style={{ marginRight: '6px', color: '#573b8a' }} />
+                                    {article.likesCount}
+                                </span>
+                                <button
+                                    type="button"
+                                    className={`like-button ${article.liked ? 'liked' : ''}`}
+                                    onClick={(event) => handleLikeClick(event, article.id)}
+                                    disabled={loading}
+                                >
+                                    {article.liked ? 'Liked' : 'Like'}
+                                </button>
+                                {article.commentsNumber > 0 && (
+                                    <button className='comment-button' onClick={() => toggleComments(article)}>
+                                        {selectedArticle === article ? 'Close' : `Comments (${article.commentsNumber})`}
+                                    </button>
+                                )}
+                            </div>
+                            {selectedArticle === article && (
+                                <CommentList articleId={article.id} />
+                            )}
+                            {localStorage.getItem('token') &&
+                                <CommentForm articleId={article.id} updateComments={updateComments} />
+                            }
+                            <div className="article-meta">
+                                <button
+                                    className='article-author-button'
+                                    onClick={() => handleAuthorClick(article.author.id)}
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Loading...' : `${article.author.firstName} ${article.author.lastName}`}
+                                </button>
+                                <span className='article-author-date'>{dateFormat(article.postedDate)}</span>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <p>Brak artykułów do wyświetlenia.</p>
+                )}
+                 {totalPages > 1 && (
                 <Pagination
                     itemsPerPage={articlesPerPage}
                     totalItems={totalArticles}
@@ -192,8 +255,9 @@ const ArticleList = () => {
                     className="custom-pagination"
                 />
             )}
+            </div>
         </div>
     );
 };
 
-export default ArticleList;
+export default Articles;

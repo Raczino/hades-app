@@ -1,6 +1,6 @@
 .main {
     height: 100vh;
-    width: 100vw;
+    width: 100%;
     background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
 }
 
@@ -27,4 +27,12 @@
 
 .main-copy{
     color: #fff;
+}
+
+.home-board-content {
+    background: #fff;
+    padding: 32px 40px;
+    min-height: 93vh;
+    max-height: auto;
+    text-align: left;
 }

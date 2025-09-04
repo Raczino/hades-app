@@ -1,133 +1,149 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'
-import useError from '../../Common/Errors/useError';
+import { useNavigate } from 'react-router-dom';
 import './LogIn.css';
-import { registrationRequest, loginRequest } from '../../Common/Request/Auth';
 
 const LogIn = () => {
-    const { error, showErrorModal} = useError();
-    const [loading, setLoading] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const navigate = useNavigate();
-    const handleInputChange = (event, setter) => {
-        setter(event.target.value);
-    };
+  const [isRegister, setIsRegister] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
 
-    const fetchRegistration = async (event) => {
-        event.preventDefault();
-        setLoading(true);
-        try {
-            const response = await registrationRequest(firstName, lastName, email, password);
-            if (response === 200) {
-                setEmail('');
-                setFirstName('');
-                setLastName('');
-                setPassword('');
-            }
-        } catch (error) {
-            showErrorModal("Registration failed");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchLogin = async (event) => {
-        event.preventDefault();
-        setLoading(true);
-        try {
-            const response = await loginRequest(email, password);
-            if (response.status !== 200) {
-                const errorData = await response.json();
-                showErrorModal(errorData.description);
-            } else {
-                const data = await response.json();
-                const token = data.token;
-                localStorage.setItem('token', token);
-                localStorage.setItem('userId', data.user.id);
-                setEmail('');
-                setPassword('');
-                navigate('/home');
-            }
-        } catch (error) {
-            showErrorModal("Login failed");
-        } finally {
-            setLoading(false);
-        }
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:8080/api/v1/auth/authenticate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (response.status !== 200) {
+        const data = await response.json();
+        setError(data.description || 'Błędny email lub hasło');
+      } else {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.id);
+        navigate('/home');
+      }
+    } catch (err) {
+      setError('Błąd sieci');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return (
-        <div className="main">
-            <input type="checkbox" id="chk" aria-hidden="true" />
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:8080/api/v1/registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email, password }),
+      });
+      if (response.status !== 200) {
+        const data = await response.json();
+        setError(data.description || 'Błąd rejestracji');
+      } else {
+        setSuccess('Rejestracja zakończona sukcesem! Możesz się zalogować.');
+        setIsRegister(false);
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+        setPassword('');
+      }
+    } catch (err) {
+      setError('Błąd sieci');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            <div className="signup">
-                {loading && <div>loading</div>}
-                <form>
-                    <label htmlFor="chk" aria-hidden="false">Sign up</label>
-                    <input
-                        type="firstName"
-                        id="firstName"
-                        placeholder='First Name'
-                        value={firstName}
-                        onChange={(event) => handleInputChange(event, setFirstName)}
-                        required
-                    />
-                    <input
-                        type="lastName"
-                        id="lastName"
-                        placeholder='Last Name'
-                        value={lastName}
-                        onChange={(event) => handleInputChange(event, setLastName)}
-                        required
-                    />
-                    <input
-                        type="email"
-                        id="email"
-                        placeholder='Email'
-                        value={email}
-                        onChange={(event) => handleInputChange(event, setEmail)}
-                        required
-                    />
-                    <input
-                        type="password"
-                        id="password"
-                        placeholder='Password'
-                        value={password}
-                        onChange={(event) => handleInputChange(event, setPassword)}
-                        required
-                    />
-                    <button onClick={fetchRegistration} disabled={loading}>Sign up</button>
-                </form>
-            </div>
-
-            <div className="login">
-                {loading && <div>loading</div>}
-                <form>
-                    <label htmlFor="chk" aria-hidden="true">Login</label>
-                    <input
-                        type="email"
-                        id="email"
-                        placeholder='Email'
-                        value={email}
-                        onChange={(event) => handleInputChange(event, setEmail)}
-                        required
-                    />
-                    <input
-                        type="password"
-                        id="password"
-                        placeholder='Password'
-                        value={password}
-                        onChange={(event) => handleInputChange(event, setPassword)}
-                        required
-                    />
-                    <button onClick={fetchLogin} disabled={loading}>Login</button>
-                    {error && <div className="error">{error}</div>}
-                </form>
-            </div>
-        </div>
-    );
+  return (
+    <div className="login-bg">
+      <form className="login-card" onSubmit={isRegister ? handleRegister : handleLogin}>
+        <h2 className="login-title">{isRegister ? 'Rejestracja' : 'Logowanie'}</h2>
+        {isRegister && (
+          <>
+            <input
+              type="text"
+              placeholder="Imię"
+              value={firstName}
+              onChange={e => setFirstName(e.target.value)}
+              required
+              className="login-input"
+            />
+            <input
+              type="text"
+              placeholder="Nazwisko"
+              value={lastName}
+              onChange={e => setLastName(e.target.value)}
+              required
+              className="login-input"
+            />
+          </>
+        )}
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+          className="login-input"
+        />
+        <input
+          type="password"
+          placeholder="Hasło"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+          className="login-input"
+        />
+        {isRegister && (
+          <div className="login-switch-inline">
+            <span>Masz już konto? </span>
+            <button
+              type="button"
+              className="login-link-inline"
+              onClick={() => { setIsRegister(false); setError(''); setSuccess(''); }}
+            >
+              Zaloguj się
+            </button>
+          </div>
+        )}
+        {!isRegister && (
+          <div className="login-switch-inline">
+            <span>Nie masz konta? </span>
+            <button
+              type="button"
+              className="login-link-inline"
+              onClick={() => { setIsRegister(true); setError(''); setSuccess(''); }}
+            >
+              Zarejestruj się
+            </button>
+          </div>
+        )}
+        {error && <div className="login-error">{error}</div>}
+        {success && <div className="login-success">{success}</div>}
+        <button
+          className="login-btn"
+          type="submit"
+          disabled={loading || !email || !password || (isRegister && (!firstName || !lastName))}
+        >
+          {loading ? (isRegister ? 'Rejestracja...' : 'Logowanie...') : (isRegister ? 'Zarejestruj się' : 'Zaloguj się')}
+        </button>
+      </form>
+    </div>
+  );
 };
 
 export default LogIn;

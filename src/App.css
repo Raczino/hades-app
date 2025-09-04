@@ -1,9 +1,8 @@
 .App {
-  min-height: 100vh;
   width: 100%;
-  background: linear-gradient(90deg, #f8f8fc 0%, #e9e6e6 100%);
-  padding: 0;
-  margin: 0;
+  min-height: 100%;
+  max-height: auto;
+  min-height: calc(100vh - 140px); /* zakładając header 140px */
   box-sizing: border-box;
 }
 
@@ -40,6 +39,14 @@
   width: 80%;
   text-align: center;
   font-weight: bold;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
 }
 
 body {

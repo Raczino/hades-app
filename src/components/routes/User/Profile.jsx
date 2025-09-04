@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import TrashIcon from '../../../components/Common/Comments/trash.jsx';
 import './profile.css';
 import { deleteArticle, getArticleForUser, getPendingArticlesForUser } from '../../Common/Request/Requests';
 import { getCommentsForUser, deleteComment } from '../../Common/Request/Comments.js';
 import { dateFormat } from '../../Common/Patterns/DatePattern.js';
+import ProfileHeader from './ProfileHeader';
+import NotificationComponent from '../../Common/websockets/NotificationComponent';
 
 const TABS = [
     { key: 'comments', label: 'Komentarze' },
@@ -15,6 +17,7 @@ const TABS = [
 
 const Profile = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const authorData = location.state?.authorData;
     const [articles, setArticles] = useState([]);
     const [commentsData, setCommentsData] = useState([]);
@@ -28,6 +31,10 @@ const Profile = () => {
     const [isFollowing, setIsFollowing] = useState(authorData.isFollowing || false);
     const [activeTab, setActiveTab] = useState('accepted');
     const [activeSideTab, setActiveSideTab] = useState('comments');
+    const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+    const [notificationCount, setNotificationCount] = useState(0);
+    const [followersCount, setFollowersCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
 
     const loggedInUserId = localStorage.getItem('userId');
 
@@ -38,6 +45,68 @@ const Profile = () => {
             fetchPendingArticles();
         }
     }, [activeTab]);
+
+    useEffect(() => {
+    }, [authorData]);
+
+    useEffect(() => {
+        // Pobierz komentarze na wejściu
+        if (activeSideTab === 'comments' && authorData) {
+            const fetchComments = async () => {
+                setLoading(true);
+                try {
+                    const data = await getCommentsForUser(authorData.id);
+                    setCommentsData(data);
+                } catch (error) {
+                    console.error('Error fetching comments:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchComments();
+        }
+        // Pobierz followers i following na wejściu
+        if (authorData) {
+            const fetchFollowers = async () => {
+                try {
+                    const response = await fetch(`http://localhost:8080/api/v1/users/${authorData.id}/followers`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.token}`,
+                        },
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setFollowersData(data);
+                        setFollowersCount(Array.isArray(data) ? data.length : 0);
+                    }
+                } catch (error) {
+                    setFollowersCount(0);
+                }
+            };
+            const fetchFollowing = async () => {
+                try {
+                    const response = await fetch(`http://localhost:8080/api/v1/users/${authorData.id}/following`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.token}`,
+                        },
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setFollowingData(data);
+                        setFollowingCount(Array.isArray(data) ? data.length : 0);
+                    }
+                } catch (error) {
+                    setFollowingCount(0);
+                }
+            };
+            fetchFollowers();
+            fetchFollowing();
+        }
+    }, [authorData, activeSideTab]);
 
     const fetchAcceptedArticles = async () => {
         setLoading(true);
@@ -268,6 +337,21 @@ const Profile = () => {
         }
     };
 
+    const handleTabClick = (tabKey) => {
+        setActiveSideTab(tabKey);
+        // Możesz dodać logikę do pobierania danych dla danej zakładki
+    };
+
+    const handleNotificationClick = () => {
+        setNotificationModalOpen(true);
+    };
+
+    const logOut = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        navigate('/login');
+    };
+
     if (!authorData) {
         return (
             <div className="profile-container">
@@ -281,25 +365,23 @@ const Profile = () => {
 
     return (
         <div className="profile-container">
-            <div className="profile-header">
-                <div className="avatar">
-                    <span>{authorData.firstName[0]}{authorData.lastName[0]}</span>
-                </div>
-                <div className="profile-main-info">
-                    <h2>{authorData.firstName} {authorData.lastName}</h2>
-                    <p className="profile-role">{authorData.userRole}</p>
-                    <p className="profile-email">{authorData.email}</p>
-                    {loggedInUserId != authorData.id && (
-                        <button
-                            className={isFollowing ? 'follow-button following' : 'follow-button'}
-                            onClick={handleFollowClick}
-                            disabled={loading}
-                        >
-                            {loading ? '...' : isFollowing ? 'Obserwujesz' : 'Obserwuj'}
-                        </button>
-                    )}
-                </div>
-            </div>
+            <ProfileHeader
+                user={authorData}
+                onExplore={() => navigate('/articles')}
+                onBoard={() => {navigate('/home')}}
+                onCreateArticle={() => navigate('/create')}
+                onProfile={() => navigate('/profile', { state: { authorData } })}
+                onLogout={logOut}
+                onTabClick={handleTabClick}
+                notificationCount={notificationCount}
+                onNotificationClick={() => setNotificationModalOpen(true)}
+            />
+            <NotificationComponent
+                userId={authorData?.id}
+                open={notificationModalOpen}
+                onClose={() => setNotificationModalOpen(false)}
+                setNotificationCount={setNotificationCount}
+            />
             <div className="profile-content">
                 <div className="profile-tabs">
                     {TABS.map(tab => (
@@ -315,11 +397,11 @@ const Profile = () => {
                             {tab.key === 'articles' && authorData.articlesCount > 0 && (
                                 <span className="tab-count">{authorData.articlesCount}</span>
                             )}
-                            {tab.key === 'followers' && authorData.followersCount > 0 && (
-                                <span className="tab-count">{authorData.followersCount}</span>
+                            {tab.key === 'followers' && followersCount > 0 && (
+                                <span className="tab-count">{followersCount}</span>
                             )}
-                            {tab.key === 'following' && authorData.followsCount > 0 && (
-                                <span className="tab-count">{authorData.followsCount}</span>
+                            {tab.key === 'following' && followingCount > 0 && (
+                                <span className="tab-count">{followingCount}</span>
                             )}
                         </button>
                     ))}

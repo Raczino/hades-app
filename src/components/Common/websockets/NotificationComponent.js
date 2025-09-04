@@ -3,10 +3,9 @@ import { Client } from '@stomp/stompjs';
 import NotificationModal from './NotificationModal';
 import { markNotificationAsRead, getUserNotifications } from '../Request/Notifications';
 
-const NotificationComponent = () => {
+const NotificationComponent = ({ userId, open, onClose, setNotificationCount }) => {
     const [notifications, setNotifications] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
-    const userId = localStorage.getItem('userId');
     const [highlightedNotificationIds, setHighlightedNotificationIds] = useState([]);
 
     const fetchNotifications = async () => {
@@ -62,7 +61,13 @@ const NotificationComponent = () => {
         return () => {
             client.deactivate();
         };
-    }, [userId, modalOpen]);
+    }, [userId]); // <-- usunięto modalOpen z zależności
+
+    useEffect(() => {
+        setNotificationCount && setNotificationCount(
+            notifications.filter(notification => !notification.read).length
+        );
+    }, [notifications, setNotificationCount]);
 
     const openModal = () => {
         const unreadNotifications = notifications.filter(notification => !notification.read);
@@ -76,24 +81,18 @@ const NotificationComponent = () => {
 
     const closeModal = () => {
         setModalOpen(false);
-        // fetchNotifications(); // Odśwież powiadomienia bez reloadu strony
     };
 
     const unreadCount = notifications.filter(notification => !notification.read).length;
 
-    return (
-        <div>
-            <h1 className='notification-header' onClick={openModal} style={{ cursor: 'pointer' }}>
-                Notifications {unreadCount > 0 && <span className="notification-count">{unreadCount}</span>}
-            </h1>
-            <NotificationModal
-                open={modalOpen}
-                onClose={closeModal}
-                notifications={notifications}
-                highlightedNotificationIds={highlightedNotificationIds}
-            />
-        </div>
-    );
+    return open ? (
+        <NotificationModal
+            open={open}
+            onClose={onClose}
+            notifications={notifications}
+            highlightedNotificationIds={highlightedNotificationIds}
+        />
+    ) : null;
 };
 
 export default NotificationComponent;

@@ -1,4 +1,4 @@
-export const getArticles = async ({ page = 1, items=1, sort = 'postedDate', order = 'desc' } = {}) => {
+export const getArticles = async ({ page = 1, items=1, sort = 'likesCount', order = 'desc' } = {}) => {
     const response = await interceptedFetch(`http://localhost:8080/api/v1/articles/get/all?page=${page}&size=${items}&sortBy=${sort}&sort=${order}`, {
         method: 'GET',
         headers: {

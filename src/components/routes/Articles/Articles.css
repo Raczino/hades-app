@@ -1,10 +1,9 @@
 .article {
+  position: relative;
   background-color: rgb(199, 210, 216);
-  width: 1000px;
   height: auto;
-  max-width: 1000px;
   padding: 20px;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   border-radius: 20px;
 }
 
@@ -17,7 +16,6 @@
   border: 2px solid gold;
   background-color: #fff7e6;
   padding: 10px;
-  margin-bottom: 15px;
 }
 
 .title {
@@ -62,6 +60,7 @@
 .author-container .article-author-date {
   padding-top: 11px;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .likes-container {
@@ -214,39 +213,153 @@
     margin-right: 10px;
 }
 
+.explore-content {
+    max-width: 100vw;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(48,48,48,0.08);
+    padding-left: 32px;
+    padding-top: 160px;
+    padding-right: 32px;
+    padding-bottom: 50px;
+    min-height: 200px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+.explore-header-row {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.explore-content > h2 {
+    display: inline-block;
+    margin: 0;
+    font-size: 2rem;
+    color: #573b8a;
+    vertical-align: middle;
+}
+
 .filters-container {
-  display: flex;
-  justify-content: center; /* Wyśrodkuj w poziomie */
-  align-items: center; /* Wyrównaj pionowo */
-  gap: 20px; /* Odstępy między poszczególnymi polami */
-  margin-bottom: 20px; /* Odstęp od listy artykułów */
-  padding: 10px;
+    display: flex;
 }
 
 .filters-container .filter {
   display: flex;
-  flex-direction: column;
-  align-items: center; /* Wyrównaj etykiety i select w pionie */
-  margin-right: 15px;
+  margin-top: 10px;
+  align-items: center
 }
 
 .filters-container label {
-  margin-bottom: 5px;
   font-weight: bold;
   font-size: 14px;
+  color: #573b8a;
+  width: 90px;
 }
 
 .filters-container select {
-  padding: 5px 10px;
-  font-size: 14px;
-  border: 1px solid #b8ae7a;
-  border-radius: 4px;
-  background-color: #f8f6f6;
+  padding: 10px 18px;
+  font-size: 1.1rem;
+  border: 2px solid #b8ae7a;
+  border-radius: 8px;
+  background-color: #f8f8fc;
+  color: #573b8a;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(48,48,48,0.08);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.filters-container select:focus {
+  border-color: #573b8a;
+  box-shadow: 0 4px 16px rgba(48,48,48,0.16);
 }
 
 .filters-container select:hover {
-  border-color: #8ad4ce;
+  border-color: #6a0dad;
+  background-color: #ece7e7;
+}
+
+.explore-article {
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.article-meta {
+  position: absolute;
+  right: 24px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  background: transparent;
+  padding: 4px 12px;
+}
+
+.article-author-button {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: #573b8a;
+  transition: text-decoration 0.2s;
+  padding: 0;
+}
+
+.article-author-button:hover {
+  text-decoration: underline;
+}
+
+.article-author-date {
+  color: #888;
+  font-size: 13px;
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+.article-comments {
+    margin-top: 18px;
+    margin-bottom: 18px;
+    background: #f8f8fc;
+    border-radius: 10px;
+    padding: 12px 18px;
+    box-shadow: 0 1px 6px rgba(48,48,48,0.06);
+}
+
+.article-comments h4 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #573b8a;
+}
+
+.article-comment {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.article-comment:last-child {
+    border-bottom: none;
+}
+
+.comment-author {
+    font-weight: bold;
+    color: #573b8a;
+    font-size: 14px;
+}
+
+.comment-content {
+    font-size: 15px;
+    margin: 4px 0;
+}
+
+.comment-date {
+    font-size: 12px;
+    color: #888;
 }
 
 
