@@ -1,5 +1,5 @@
-export const getComments = async (articleId) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/article?id=${articleId}&page=1&size=100&sort=desc`, {
+export const getCommentsForArticle = async (articleId, params) => {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/article?articleId=${articleId}&page=${params.page}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

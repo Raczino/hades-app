@@ -9,8 +9,8 @@ import ProfileHeader from './ProfileHeader';
 import NotificationComponent from '../../Common/websockets/NotificationComponent';
 
 const TABS = [
-    { key: 'comments', label: 'Komentarze' },
     { key: 'articles', label: 'Artykuły' },
+    { key: 'comments', label: 'Komentarze' },
     { key: 'followers', label: 'Obserwujący' },
     { key: 'following', label: 'Obserwowani' }
 ];
@@ -30,7 +30,7 @@ const Profile = () => {
     const [showComments, setShowComments] = useState(false);
     const [isFollowing, setIsFollowing] = useState(authorData.isFollowing || false);
     const [activeTab, setActiveTab] = useState('accepted');
-    const [activeSideTab, setActiveSideTab] = useState('comments');
+    const [activeSideTab, setActiveSideTab] = useState('articles');
     const [notificationModalOpen, setNotificationModalOpen] = useState(false);
     const [notificationCount, setNotificationCount] = useState(0);
     const [followersCount, setFollowersCount] = useState(0);
@@ -119,6 +119,8 @@ const Profile = () => {
             setLoading(false);
         }
     };
+
+    const handleAuthorClick = (userId) => navigate(`/profile/${userId}`);
 
     const fetchPendingArticles = async () => {
         setLoading(true);
@@ -368,7 +370,7 @@ const Profile = () => {
             <ProfileHeader
                 user={authorData}
                 onExplore={() => navigate('/articles')}
-                onBoard={() => {navigate('/home')}}
+                onBoard={() => { navigate('/home') }}
                 onCreateArticle={() => navigate('/create')}
                 onProfile={() => navigate('/profile', { state: { authorData } })}
                 onLogout={logOut}
@@ -413,7 +415,11 @@ const Profile = () => {
                             <h1 className='list-title'>Lista Obserwujących</h1>
                             {followersData.length > 0 ? followersData.map((follower) => (
                                 <div key={follower.id} className="follower-card">
-                                    <h3>{follower.firstName} {follower.lastName}</h3>
+                                    <h3
+                                        className='title'
+                                        onClick={() => handleAuthorClick(follower.id)}
+                                        disabled={loading}
+                                    >{follower.firstName} {follower.lastName}</h3>
                                     <p>{follower.email}</p>
                                 </div>
                             )) : <p>Nikt Cię jeszcze nie obserwuje</p>}
@@ -459,7 +465,7 @@ const Profile = () => {
                                         onClick={() => setActiveTab('accepted')}
                                         disabled={loading}
                                     >
-                                        Artykuły
+                                        Opublikowane
                                     </button>
                                     <button
                                         className={activeTab === 'pending' ? 'tab active pending' : 'tab'}
@@ -474,7 +480,11 @@ const Profile = () => {
                                 (Array.isArray(articles.items) ? articles.items : articles).map((article, index) => (
                                     <div key={article.id} className={`MyArticle article-${index + 1}`}>
                                         <div className="title-container">
-                                            <h2 className='title'>{article.title}</h2>
+                                            <h3
+                                                className='title'
+                                                style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                                                onClick={() => navigate(`/article/${article.id}`)}
+                                            >{article.title}</h3>
                                             <TrashIcon onClick={() => handleDeleteClick(article.id)} />
                                         </div>
                                         <p className='content'>{article.content}</p>

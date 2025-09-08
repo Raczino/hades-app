@@ -2,13 +2,103 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileHeader from '../User/ProfileHeader';
 import NotificationComponent from '../../Common/websockets/NotificationComponent';
-import CommentList from '../../Common/Comments/Comments';
 import CommentForm from '../../Common/Comments/CommentForm';
 import { dateFormat } from '../../Common/Patterns/DatePattern';
 import { getArticles, getUser, likeArticle } from '../../Common/Request/Requests';
+import { getCommentsForArticle } from '../../Common/Request/Comments.js';
 import Pagination from '../../pagination/Pagination';
 import { FaThumbsUp } from 'react-icons/fa';
 import './Articles.css';
+import { height } from '@mui/system';
+
+const ArticleCommentsPreview = ({ articleId }) => {
+    const [comments, setComments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+
+    // Dodaj obsługę likowania komentarza
+    const handleCommentLikeClick = async (commentId, liked) => {
+        try {
+            // importuj likeComment z odpowiedniego pliku
+            const { likeComment } = require('../../Common/Request/Comments');
+            const response = await likeComment(commentId);
+            if (!response) throw new Error('Failed to update like status');
+            setComments(prevComments =>
+                prevComments.map(comment =>
+                    comment.id === commentId
+                        ? {
+                            ...comment,
+                            liked: !liked,
+                            likesNumber: liked ? comment.likesNumber - 1 : comment.likesNumber + 1
+                        }
+                        : comment
+                )
+            );
+        } catch (error) {
+            // obsługa błędu
+        }
+    };
+
+    useEffect(() => {
+        const fetchComments = async () => {
+            setLoading(true);
+            try {
+                const data = await getCommentsForArticle(articleId);
+                const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+                setComments(arr.slice(0, 3));
+            } catch (error) {
+                setComments([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchComments();
+    }, [articleId]);
+
+    const handleAuthorClick = async (authorId) => {
+        try {
+            const userData = await getUser(authorId);
+            navigate('/profile', { state: { authorData: userData } });
+        } catch (error) {
+        }
+    };
+
+    if (loading) return <div>Ładowanie komentarzy...</div>;
+    if (!comments.length) return <div style={{ height: '20px', marginTop: '20px', marginBottom: '10px' }}> Brak komentarzy.</div>;
+
+    return (
+        <div className="article-comments">
+            <h4>Komentarze</h4>
+            {comments.map(comment => (
+                <div key={comment.id} className="article-comment">
+                    <div
+                        className="comment-author-link"
+                        onClick={() => handleAuthorClick(comment.author?.id)}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        {comment.author?.firstName} {comment.author?.lastName}
+                    </div>
+                    <div className="comment-content">{comment.content}</div>
+                    <div className="comment-date">{dateFormat(comment.postedDate)}</div>
+                    <div className="comment-likes-container">
+                        <span className="likes">
+                            <FaThumbsUp style={{ marginRight: '6px', color: '#573b8a' }} />
+                            {comment.likesNumber}
+                        </span>
+                        <button
+                            type="button"
+                            className={`like-button ${comment.liked ? 'liked' : ''}`}
+                            onClick={() => handleCommentLikeClick(comment.id, comment.liked)}
+                            disabled={loading}
+                        >
+                            {comment.liked ? 'Liked' : 'Like'}
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
 
 const Articles = () => {
     const navigate = useNavigate();
@@ -204,7 +294,13 @@ const Articles = () => {
                 {articles.length > 0 ? (
                     articles.map(article => (
                         <div key={article.id} className={`article ${article.pinned ? 'pinned' : ''}`}>
-                            <h3 className='title'>{article.title}</h3>
+                            <h3
+                                className='title'
+                                style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                                onClick={() => navigate(`/article/${article.id}`)}
+                            >
+                                {article.title}
+                            </h3>
                             <p className='content'>{article.content}</p>
                             <div className="likes-container">
                                 <span className="likes">
@@ -219,15 +315,9 @@ const Articles = () => {
                                 >
                                     {article.liked ? 'Liked' : 'Like'}
                                 </button>
-                                {article.commentsNumber > 0 && (
-                                    <button className='comment-button' onClick={() => toggleComments(article)}>
-                                        {selectedArticle === article ? 'Close' : `Comments (${article.commentsNumber})`}
-                                    </button>
-                                )}
                             </div>
-                            {selectedArticle === article && (
-                                <CommentList articleId={article.id} />
-                            )}
+                            {/* Wyświetl 3 pierwsze komentarze nad inputem */}
+                            <ArticleCommentsPreview articleId={article.id} />
                             {localStorage.getItem('token') &&
                                 <CommentForm articleId={article.id} updateComments={updateComments} />
                             }
@@ -246,15 +336,15 @@ const Articles = () => {
                 ) : (
                     <p>Brak artykułów do wyświetlenia.</p>
                 )}
-                 {totalPages > 1 && (
-                <Pagination
-                    itemsPerPage={articlesPerPage}
-                    totalItems={totalArticles}
-                    paginate={paginate}
-                    currentPage={currentPage}
-                    className="custom-pagination"
-                />
-            )}
+                {totalPages > 1 && (
+                    <Pagination
+                        itemsPerPage={articlesPerPage}
+                        totalItems={totalArticles}
+                        paginate={paginate}
+                        currentPage={currentPage}
+                        className="custom-pagination"
+                    />
+                )}
             </div>
         </div>
     );

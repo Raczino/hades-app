@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getComments, likeComment, deleteComment } from '../Request/Comments';
+import { getCommentsForArticle, likeComment, deleteComment } from '../Request/Comments';
 import { useNavigate } from 'react-router-dom';
 import './Comments.css';
 import TrashIcon from './trash';
@@ -23,16 +23,20 @@ const CommentList = ({ articleId }) => {
     const fetchComments = async () => {
         setLoading(true);
         try {
-            const data = await getComments(articleId);
+            const data = await getCommentsForArticle(articleId);
 
-            if (data) {
+            if (data && Array.isArray(data.items)) {
+                setComments(data.items);
+            } else if (Array.isArray(data)) {
                 setComments(data);
             } else {
+                setComments([]);
                 console.error('Invalid comments data:', data);
             }
 
         } catch (error) {
             console.error('Error fetching comments:', error);
+            setComments([]);
         } finally {
             setLoading(false);
         }

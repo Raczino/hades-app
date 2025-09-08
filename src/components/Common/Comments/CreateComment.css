@@ -1,5 +1,5 @@
 .comment-form {
-    width: 1000px;
+    width: 930px;
 }
 
 .Comment-content {
@@ -8,9 +8,7 @@
     resize: none;
     padding: 10px;
     font-size: 16px;
-    display: block;
-    width: 980px;
-    margin: 0;
+    width: 880px;
 }
 
 .Comment-content.active {
@@ -20,6 +18,9 @@
 .button-group {
     display: flex;
     justify-content: space-between;
+    width: 250px;
+    align-items: right;
+    
 }
 
 .Comment-save {

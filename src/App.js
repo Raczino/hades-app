@@ -12,6 +12,7 @@ import Profile  from './components/routes/User/Profile.jsx';
 import './App.css';
 import ArticleList from "./components/routes/Articles/Articles.jsx";
 import CreateArticleForm from "./components/Common/Forms/createArticle.jsx";
+import ArticleDetails from './components/routes/Articles/ArticleDetails';
 
 const router = createBrowserRouter([
   {
@@ -37,6 +38,10 @@ const router = createBrowserRouter([
   {
     path: "/create",
     element: <CreateArticleForm />,
+  },
+  {
+    path: "/article/:articleId",
+    element: <ArticleDetails />,
   }
 ]);
 
