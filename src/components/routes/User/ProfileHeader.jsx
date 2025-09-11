@@ -1,18 +1,21 @@
 import React from 'react';
 import './profile.css';
-import { FaBell } from 'react-icons/fa';
+import { FaBell, FaCheck } from 'react-icons/fa';
 
 const ProfileHeader = ({
     user,
     onExplore,
-    onBoard,
     onCreateArticle,
     onProfile,
     onLogout,
     onTabClick,
     notificationCount,
     onNotificationClick,
-    onHome
+    onHome,
+    showFollowButton,
+    isFollowing,
+    onFollowClick,
+    followLoading,
 }) => (
     <div className="profile-header">
         <div className="avatar">
@@ -20,8 +23,15 @@ const ProfileHeader = ({
         </div>
         <div className="profile-main-info">
             <h2>{user?.firstName} {user?.lastName}</h2>
-            <p className="profile-role">{user?.userRole}</p>
-            <p className="profile-email">{user?.email}</p>
+                <p className="profile-role">{user?.userRole}</p>
+            <div className="profile-title-row">
+                <p className="profile-email">{user?.email}</p>
+                {showFollowButton && (
+                    <button className={`follow-btn ${isFollowing ? 'active' : ''}`} onClick={onFollowClick} disabled={followLoading}>
+                        {isFollowing ? <><FaCheck style={{ marginRight: 6 }} /> Obserwujesz</> : 'Obserwuj'}
+                    </button>
+                )}
+            </div>
         </div>
         <div className="header-navButtons">
             <div className="header-bell" onClick={onNotificationClick}>

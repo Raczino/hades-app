@@ -40,8 +40,8 @@ export const deleteComment = async (commentId) => {
     return response;
 };
 
-export const getCommentsForUser = async (userId) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/user?userId=${userId}&page=1&size=10`, {
+export const getCommentsForUser = async (userId, page = 1) => {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/user?userId=${userId}&page=${page}&size=10`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

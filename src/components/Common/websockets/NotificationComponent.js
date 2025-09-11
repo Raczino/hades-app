@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import NotificationModal from './NotificationModal';
 import { markNotificationAsRead, getUserNotifications } from '../Request/Notifications';
@@ -7,88 +7,110 @@ const NotificationComponent = ({ userId, open, onClose, setNotificationCount }) 
     const [notifications, setNotifications] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
     const [highlightedNotificationIds, setHighlightedNotificationIds] = useState([]);
+    const modalOpenRef = useRef(modalOpen);
+    const clientRef = useRef(null);
 
-    const fetchNotifications = async () => {
-        if (!userId) return;
+    // logged-in user id
+    const loggedInId = localStorage.getItem('userId');
+    // if parent passed a userId different than logged in, ignore it (show only own notifications)
+    const effectiveUserId = (userId && userId === loggedInId) ? userId : loggedInId;
+
+    useEffect(() => { modalOpenRef.current = modalOpen; }, [modalOpen]);
+
+    // sync internal modal state with external `open` prop
+    useEffect(() => {
+        if (open) {
+            setModalOpen(true);
+            // mark unread as read when opening
+            const unread = notifications.filter(n => !n.read);
+            setHighlightedNotificationIds(unread.map(n => n.id));
+            unread.forEach(n => { markNotificationAsRead(n.id).catch(() => {}); });
+        } else {
+            setModalOpen(false);
+            setHighlightedNotificationIds([]);
+        }
+    }, [open]);
+
+    const fetchNotifications = async (uid) => {
+        if (!uid) return;
         try {
-            const data = await getUserNotifications(userId);
-            setNotifications(data);
+            const data = await getUserNotifications(uid);
+            const arr = Array.isArray(data) ? data : (data?.items || []);
+            setNotifications(arr);
         } catch (error) {
             console.error('Error fetching notifications:', error);
         }
     };
 
     useEffect(() => {
-        if (!userId) return;
-        fetchNotifications();
+        if (!effectiveUserId) return;
+
+        fetchNotifications(effectiveUserId);
+
+        // cleanup previous client if any
+        if (clientRef.current) {
+            try { clientRef.current.deactivate(); } catch (e) { }
+            clientRef.current = null;
+        }
 
         const client = new Client({
             brokerURL: 'ws://localhost:8080/ws',
-            debug: (str) => { console.log(str); },
+            debug: () => {},
             onConnect: () => {
-                console.log('Connected!');
-                client.subscribe(`/topic/notifications/${userId}`, (message) => {
-                    const notification = JSON.parse(message.body);
-                    console.log('Received message: ', notification);
-
-                    setNotifications((prevNotifications) => {
-                        const updatedNotifications = [...prevNotifications, notification];
-
-                        if (modalOpen && !notification.read) {
-                            setHighlightedNotificationIds((prevIds) => {
-                                if (!prevIds.includes(notification.id)) {
-                                    return [...prevIds, notification.id];
+                try {
+                    client.subscribe(`/topic/notifications/${effectiveUserId}`, (message) => {
+                        try {
+                            const notification = JSON.parse(message.body);
+                            setNotifications(prev => {
+                                const updated = [...prev, notification];
+                                // if modal is open, highlight and mark
+                                if (modalOpenRef.current && !notification.read) {
+                                    setHighlightedNotificationIds(prevIds => {
+                                        if (!prevIds.includes(notification.id)) return [...prevIds, notification.id];
+                                        return prevIds;
+                                    });
+                                    markNotificationAsRead(notification.id).catch(() => {});
                                 }
-                                return prevIds;
+                                return updated;
                             });
-                        }
-
-                        return updatedNotifications;
+                        } catch (err) { console.error('Invalid notification message', err); }
                     });
-                });
+                } catch (err) { console.error('Failed to subscribe', err); }
             },
             onStompError: (frame) => {
-                console.error('Broker reported error: ', frame.headers['message']);
-                console.error('Additional details: ', frame.body);
-                if (frame.headers['message'] && frame.headers['message'].includes('Unauthorized')) {
+                console.error('Broker error:', frame.headers?.message);
+                if (frame.headers?.message && frame.headers.message.includes('Unauthorized')) {
                     window.location = '/login';
                 }
             }
         });
 
+        clientRef.current = client;
         client.activate();
 
         return () => {
-            client.deactivate();
+            if (clientRef.current) {
+                try { clientRef.current.deactivate(); } catch (e) { }
+                clientRef.current = null;
+            }
         };
-    }, [userId]); // <-- usunięto modalOpen z zależności
+    }, [effectiveUserId]);
 
     useEffect(() => {
-        setNotificationCount && setNotificationCount(
-            notifications.filter(notification => !notification.read).length
-        );
+        if (typeof setNotificationCount === 'function') {
+            setNotificationCount(notifications.filter(n => !n.read).length);
+        }
     }, [notifications, setNotificationCount]);
-
-    const openModal = () => {
-        const unreadNotifications = notifications.filter(notification => !notification.read);
-        setModalOpen(true);
-        setHighlightedNotificationIds(unreadNotifications.map(notification => notification.id));
-
-        unreadNotifications.forEach(notification => {
-            markNotificationAsRead(notification.id);
-        });
-    };
 
     const closeModal = () => {
         setModalOpen(false);
+        if (typeof onClose === 'function') onClose();
     };
 
-    const unreadCount = notifications.filter(notification => !notification.read).length;
-
-    return open ? (
+    return modalOpen ? (
         <NotificationModal
-            open={open}
-            onClose={onClose}
+            open={modalOpen}
+            onClose={closeModal}
             notifications={notifications}
             highlightedNotificationIds={highlightedNotificationIds}
         />

@@ -70,8 +70,8 @@ export const getUser = async (id) => {
     return response.json();
 };
 
-export const getArticleForUser = async (id) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/articles/get/from?userId=${id}&page=1&size=10`, {
+export const getArticleForUser = async (id, page = 1, size = 10) => {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/articles/get/from?userId=${id}&page=${page}&size=${size}&sortBy=postedDate&sort=desc`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -84,8 +84,8 @@ export const getArticleForUser = async (id) => {
     return response.json();
 };
 
-export const getPendingArticlesForUser = async (id) => {
-    const response = await interceptedFetch(`http://localhost:8080/webapi/v1/moderator/article/get/from/user?id=${id}`, {
+export const getPendingArticlesForUser = async (id, page = 1, size = 10) => {
+    const response = await interceptedFetch(`http://localhost:8080/webapi/v1/moderator/article/get/from/user?id=${id}&page=${page}&size=${size}&sortBy=postedDate&sort=desc`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -93,7 +93,49 @@ export const getPendingArticlesForUser = async (id) => {
         },
     });
     if (!response.ok) {
-        throw new Error('Failed to fetch articles');
+        throw new Error('Failed to fetch pending articles');
+    }
+    return response.json();
+};
+
+export const getCommentsForUser = async (id, page = 1, size = 25) => {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/user?userId=${id}&page=${page}&size=${size}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.token}`,
+        },
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch comments');
+    }
+    return response.json();
+};
+
+export const getFollowersForUser = async (id, page = 1, size = 25) => {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/users/${id}/followers?page=${page}&size=${size}&sort=createdAt,desc`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.token}`,
+        },
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch followers');
+    }
+    return response.json();
+};
+
+export const getFollowingForUser = async (id, page = 1, size = 25) => {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/users/${id}/following?page=${page}&size=${size}&sort=createdAt,desc`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.token}`,
+        },
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch following');
     }
     return response.json();
 };
