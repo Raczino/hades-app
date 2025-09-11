@@ -15,8 +15,8 @@ export const markNotificationAsRead = async (notificationId) => {
     return response;
 };
 
-export const getUserNotifications = async (userId) => {
-    const response = await fetch(`http://localhost:8080/api/v1/notification/get/user?id=${userId}`, {
+export const getUserNotifications = async (userId, offset = 0, limit = 20) => {
+    const response = await fetch(`http://localhost:8080/api/v1/notification/get/user?id=${userId}&offset=${offset}&limit=${limit}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

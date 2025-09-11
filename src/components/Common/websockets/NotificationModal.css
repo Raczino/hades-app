@@ -15,7 +15,7 @@
     padding: 20px;
     border: 1px solid #888;
     width: 60%;
-    height: 50%;
+    height: auto;
     overflow-y: auto;
 }
 
@@ -34,7 +34,7 @@
 }
 
 .notification-list {
-    max-height: 400px;
+    height: 450px;
     overflow-y: auto;
     list-style: none;
     padding: 0;

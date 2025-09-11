@@ -35,4 +35,63 @@
     min-height: 93vh;
     max-height: auto;
     text-align: left;
+
+}
+
+.premium-section {
+    max-width: 100%;
+    margin: 20px auto;
+    padding: 12px 32px;
+    padding-top: 150px;
+    box-sizing: border-box;
+    display: flex;             /* center content vertically stack */
+    flex-direction: column;
+    align-items: center;       /* center title and options horizontally */
+}
+
+.premium-title {
+    margin: 0 0 12px 0;
+    color: #573b8a;
+    font-size: 1.8rem;
+    text-align: center;        /* center the title text */
+    width: 100%;
+}
+
+.premium-options {
+    display: flex;
+    gap: 30px;                 /* mniejszy odstęp aby lepiej wyglądało na węższych ekranach */
+    justify-content: center;   /* center tiles horizontally */
+    flex-wrap: wrap;           /* wrap to next line on small screens */
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.premium-offer {
+    background: #f0e6ff;
+    height: 500px;
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 16px;
+    min-width: 200px;
+    text-align: center;
+    flex: 0 0 auto;
+    font-weight: bold;
+    color: #573b8a;
+}
+
+/* opcjonalnie dopasuj rozmiary kafelków na mniejsze ekrany */
+@media (max-width: 900px) {
+    .premium-offer {
+        width: 280px;
+        height: 420px;
+        margin-bottom: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .premium-offer {
+        width: 220px;
+        height: 380px;
+    }
 }

@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
 import { getUser } from '../../Common/Request/Requests';
@@ -6,8 +6,6 @@ import NotificationComponent from '../../Common/websockets/NotificationComponent
 import ProfileHeader from '../User/ProfileHeader';
 
 const Home = () => {
-    console.log('Home rendered'); // sprawdź czy pojawia się dwa razy
-
     const navigate = useNavigate();
     const [userData, setUserData] = useState(null);
     const [userName, setUserName] = useState(null);
@@ -15,7 +13,7 @@ const Home = () => {
     const [notificationCount, setNotificationCount] = useState(0);
 
     useEffect(() => {
-        if (userData) return; // nie pobieraj ponownie jeśli już masz usera
+        if (userData) return;
         const fetchUserData = async () => {
             if (!localStorage.getItem('userId')) return;
             try {
@@ -33,7 +31,7 @@ const Home = () => {
         navigate('/articles');
     };
 
-     const goToHome = () => {
+    const goToHome = () => {
         navigate('/articles');
     };
 
@@ -55,7 +53,7 @@ const Home = () => {
         <div className="home">
             <ProfileHeader
                 user={userData}
-                onHome={goToHome}
+                onHome={() => { }}
                 onExplore={goToArticles}
                 onCreateArticle={goToCreateArticle}
                 onProfile={goToProfile}
@@ -70,6 +68,19 @@ const Home = () => {
                 setNotificationCount={setNotificationCount}
             />
             <div className="home-board-content">
+                {userData && (String(userData.accountType || '').toLowerCase() !== 'premium') && (
+                    <div className="premium-section">
+                        <h3 className="premium-title">Upgrade to Premium account</h3>
+                        <div className="premium-options">
+                            {['Monthly subscription', 'Half-yearly subscription', 'Yearly subscription'].map((opt, idx) => (
+                                <div key={idx} className="premium-offer">
+                                    {opt}
+                                    <button className="buy-button">Buy</button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {/* Tu będą wyświetlane artykuły obserwowanych osób (My Board) */}
                 <h2>My Board</h2>
                 <p>W tej sekcji będą wyświetlane artykuły osób, które obserwujesz.</p>
