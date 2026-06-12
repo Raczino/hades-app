@@ -14,7 +14,7 @@
     height: 60px;
 }
 
-.main-container{
+.main-container {
     display: flex;
     justify-content: space-between;
 }
@@ -25,7 +25,7 @@
     background-color: rgb(201, 53, 53);
 }
 
-.main-copy{
+.main-copy {
     color: #fff;
 }
 
@@ -42,26 +42,31 @@
     max-width: 100%;
     margin: 20px auto;
     padding: 12px 32px;
-    padding-top: 150px;
     box-sizing: border-box;
-    display: flex;             /* center content vertically stack */
+    display: flex;
+    /* center content vertically stack */
     flex-direction: column;
-    align-items: center;       /* center title and options horizontally */
+    align-items: center;
+    /* center title and options horizontally */
 }
 
 .premium-title {
     margin: 0 0 12px 0;
     color: #573b8a;
     font-size: 1.8rem;
-    text-align: center;        /* center the title text */
+    text-align: center;
+    /* center the title text */
     width: 100%;
 }
 
 .premium-options {
     display: flex;
-    gap: 30px;                 /* mniejszy odstęp aby lepiej wyglądało na węższych ekranach */
-    justify-content: center;   /* center tiles horizontally */
-    flex-wrap: wrap;           /* wrap to next line on small screens */
+    gap: 40px;
+    /* mniejszy odstęp aby lepiej wyglądało na węższych ekranach */
+    justify-content: center;
+    /* center tiles horizontally */
+    flex-wrap: wrap;
+    /* wrap to next line on small screens */
     padding-bottom: 8px;
     -webkit-overflow-scrolling: touch;
 }
@@ -94,4 +99,160 @@
         width: 220px;
         height: 380px;
     }
+}
+
+.promo-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 60;
+}
+
+.promo-modal {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 980px;
+    width: calc(100% - 40px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    position: relative;
+    /* <- allow absolute positioning of close button */
+}
+
+/* Close button: top-right corner inside modal, shown as "X" */
+.promo-close {
+    width: 32px;
+    height: 32px;
+    margin-right: 32px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: #555;
+    border-radius: 6px;
+}
+
+.promo-close:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #000;
+}
+
+.promo-title {
+    text-align: center;
+    color: #573b8a;
+    margin-bottom: 12px;
+}
+
+.promo-tiles {
+    width: 100%;
+    display: flex;
+    gap: 30px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    /* don't wrap, keep in a single row */
+    overflow-x: auto;
+    /* allow horizontal scroll when overflowing */
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.promo-tile {
+    flex: 0 0 260px;
+    /* fixed width, won't shrink */
+    min-width: 260px;
+    max-width: 260px;
+    background: linear-gradient(90deg, #f8f8fc, #fff);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(12, 11, 14, 0.06);
+}
+
+.promo-tile-title {
+    font-weight: 700;
+    color: #573b8a;
+    margin-bottom: 8px;
+    font-size: 26px;
+}
+
+.promo-tile-desc {
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+    color: #444;
+}
+
+.promo-tile-duration {
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.promo-tile-price {
+    font-size: 24px;
+    font-weight: 1000;
+    margin-bottom: 12px;
+    color: #573b8a;
+}
+
+.promo-buy {
+    background: #6a0dad;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.promo-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.promo-close-btn {
+    background: #ece7e7;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+
+.promo-features {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    font-weight: 500;
+
+    /* ensure features are left-aligned inside a centered tile */
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;      /* align text to the left */
+    margin-left: 0;        /* remove any inherited centering margin */
+    padding-inline-start: 0;
+}
+
+.promo-features li {
+    margin-bottom: 6px;
+    position: relative;
+    text-align: left;     /* enforce left text inside each li */
+    display: block;       /* ensure block layout */
+}
+
+/* keep custom marker but ensure it sits to the left of left-aligned text */
+.promo-features li::before {
+    content: "-";
+    color: #6a0dad;
+    display: inline-block;
+    margin-right: 5px;
+    /* align marker with left text */
+    text-align: left;
 }

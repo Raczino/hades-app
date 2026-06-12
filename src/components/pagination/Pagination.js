@@ -42,17 +42,31 @@ const Pagination = ({
             <ul className="pagination">
                 {currentPage > 1 && (
                     <li>
-                        <button onClick={() => paginate(1)}>&lt;&lt;</button>
+                        <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => paginate(1)}
+                        >
+                            &lt;&lt;
+                        </button>
                     </li>
                 )}
                 {currentPage > 1 && (
                     <li>
-                        <button onClick={() => paginate(currentPage - 1)}>&lt;</button>
+                        <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => paginate(currentPage - 1)}
+                        >
+                            &lt;
+                        </button>
                     </li>
                 )}
                 {visiblePageNumbers().map(number => (
                     <li key={number}>
                         <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
                             onClick={() => paginate(number)}
                             className={`page-link ${currentPage === number ? 'active' : ''}`}
                         >
@@ -62,12 +76,24 @@ const Pagination = ({
                 ))}
                 {currentPage < totalPages && (
                     <li>
-                        <button onClick={() => paginate(currentPage + 1)}>&gt;</button>
+                        <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => paginate(currentPage + 1)}
+                        >
+                            &gt;
+                        </button>
                     </li>
                 )}
                 {currentPage < totalPages && (
                     <li>
-                        <button onClick={() => paginate(totalPages)}>&gt;&gt;</button>
+                        <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => paginate(totalPages)}
+                        >
+                            &gt;&gt;
+                        </button>
                     </li>
                 )}
             </ul>

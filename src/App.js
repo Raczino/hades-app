@@ -40,7 +40,7 @@ const router = createBrowserRouter([
     element: <ArticleList />,
   },
   {
-    path: "/create",
+    path: "/create-article",
     element: <CreateArticleForm />,
   },
   {

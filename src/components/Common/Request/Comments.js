@@ -1,5 +1,5 @@
 export const getCommentsForArticle = async (articleId, params) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/article?articleId=${articleId}&page=${params.page}`, {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/for/article?articleId=${articleId}&page=${params.page}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -41,7 +41,7 @@ export const deleteComment = async (commentId) => {
 };
 
 export const getCommentsForUser = async (userId, page = 1) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/user?userId=${userId}&page=${page}&size=10`, {
+    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/for/user?userId=${userId}&page=${page}&size=10`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

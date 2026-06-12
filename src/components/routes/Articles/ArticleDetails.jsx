@@ -116,7 +116,6 @@ const ArticleDetails = () => {
         <>
             <button className="back-button" onClick={() => navigate(-1)}>Powrót</button>
             <div className="article-details-container" style={{ position: 'relative' }}>
-                {loading && <p>Ładowanie...</p>}
                 {article && (
                     <div className="article-details">
                         <h1 className="details-title">{article.title}</h1>

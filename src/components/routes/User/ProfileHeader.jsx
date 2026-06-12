@@ -1,6 +1,7 @@
 import React from 'react';
 import './profile.css';
 import { FaBell, FaCheck } from 'react-icons/fa';
+import PremiumPromoManager from '../../Common/Modals/PremiumPromoManager';
 
 const ProfileHeader = ({
     user,
@@ -16,6 +17,7 @@ const ProfileHeader = ({
     isFollowing,
     onFollowClick,
     followLoading,
+    promoOffers // new prop
 }) => (
     <div className="profile-header">
         <div className="avatar">
@@ -46,6 +48,9 @@ const ProfileHeader = ({
             <button className="button" onClick={onProfile}>Profile</button>
             <button className="button" onClick={onLogout}>Log out</button>
         </div>
+
+        {/* Mount promo manager inside header so modal can appear on all pages with this header */}
+        <PremiumPromoManager user={user} options={promoOffers} />
     </div>
 );
 

@@ -132,7 +132,7 @@ const Profile = () => {
         if (authorData) {
             const fetchFollowers = async () => {
                 try {
-                    const data = await getFollowersForUser(authorData.id, followersPage, ITEMS_PER_PAGE);
+                    const data = await getFollowersForUser(authorData.id, 0, 25);
                     const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
                     setFollowersData(arr);
                     setTotalFollowers(Number(data?.meta?.totalItems || arr.length));
@@ -142,7 +142,7 @@ const Profile = () => {
             };
             const fetchFollowing = async () => {
                 try {
-                    const data = await getFollowingForUser(authorData.id, followingPage, ITEMS_PER_PAGE);
+                    const data = await getFollowingForUser(authorData.id, 0, 25);
                     const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
                     setFollowingData(arr);
                     setTotalFollowing(Number(data?.meta?.totalItems || arr.length));
@@ -295,7 +295,7 @@ const Profile = () => {
                 user={authorData}
                 onExplore={() => navigate('/articles')}
                 onHome={() => { navigate('/home') }}
-                onCreateArticle={() => navigate('/create')}
+                onCreateArticle={() => navigate('/create-article')}
                 onProfile={() => navigate(`/profile/${authorData.id}`, { state: { authorData } })}
                 onLogout={logOut}
                 onTabClick={handleTabClick}
@@ -329,7 +329,6 @@ const Profile = () => {
                     ))}
                 </div>
                 <div className="profile-list-card">
-                    {loading && <p>Loading...</p>}
                     {activeSideTab === 'followers' && (
                         <div className='followers-list'>
                             <h1 className='list-title'>Lista Obserwujących</h1>

@@ -1,0 +1,102 @@
+.search-root {
+	position: relative;
+	width: 100%;
+	max-width: 540px;
+}
+
+.search-input-wrap {
+	display: flex;
+	align-items: center;
+    height: 50px;
+	gap: 8px;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+	border: 1px solid #e6eef9;
+}
+
+/* reset / base for buttons inside search wrapper to avoid global hover styles */
+.search-input-wrap > button {
+	border: none;
+	background: transparent;
+    margin-top: 8px;
+	padding: 6px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+}
+
+/* primary search button (magnifier) - placed on the right, thin left separator */
+.search-input-wrap > .search-btn {
+	background: transparent;
+	color: #374151; /* neutral icon color */
+	height: 36px;
+	width: 36px;
+	border-radius: 0 8px 8px 0; /* rounded on right side only */
+	border-left: 1px solid #e6eef9; /* vertical separator */
+	box-shadow: none;
+	transition: background .12s ease, color .12s ease;
+}
+
+/* hover/focus for primary button - transparent look */
+.search-input-wrap > .search-btn:hover,
+.search-input-wrap > .search-btn:focus {
+	background: rgba(2,6,23,0.03); /* very subtle highlight */
+	color: #111827;
+	outline: none;
+	transform: none;
+}
+
+/* clear button (small X) - left of the magnifier */
+.search-input-wrap > .search-clear {
+	background: transparent;
+	color: #64748b;
+	height: 32px;
+	width: 32px;
+	border-radius: 6px;
+	margin-right: 4px;
+	transition: background .12s ease, color .12s ease;
+}
+
+/* hover/focus for clear button */
+.search-input-wrap > .search-clear:hover,
+.search-input-wrap > .search-clear:focus {
+	background: rgba(2,6,23,0.03);
+	color: #0b1220;
+	outline: none;
+}
+
+/* ensure inputs don't cause layout shift when buttons change */
+.search-input {
+	flex: 1;
+	min-width: 0;
+	padding: 8px 10px;
+}
+
+.search-suggestions {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: calc(100% + 8px);
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 12px 30px rgba(2,6,23,0.08);
+	list-style: none;
+	margin: 0;
+	padding: 8px 0;
+	z-index: 2000;
+	max-height: 240px;
+	overflow: auto;
+	border: 1px solid rgba(15,23,42,0.04);
+}
+
+.suggestion-item {
+	padding: 10px 14px;
+	cursor: pointer;
+	transition: background .08s ease;
+}
+.search-suggestions .loading {
+	padding: 10px 14px;
+	color: #64748b;
+}

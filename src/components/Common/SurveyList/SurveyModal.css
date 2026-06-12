@@ -1,0 +1,151 @@
+.survey-modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0,0,0,0.45);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 2000;
+}
+
+.survey-modal {
+	background: #fff;
+	color: #111; /* ensure visible text */
+	width: 90%;
+	max-width: 720px;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.survey-modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 16px;
+	border-bottom: 1px solid #eee;
+}
+
+.modal-close {
+	background: transparent;
+    width: 32px;
+    height: 32px;
+	border: none;
+	font-size: 1.1rem;
+	cursor: pointer;
+	color: #333;
+}
+
+.survey-modal-body {
+	padding: 14px;
+	max-height: 70vh;
+	overflow: auto;
+	color: #111; /* force dark text inside */
+}
+
+.survey-start, .survey-question, .survey-final {
+	display: flex;
+	flex-direction: column;
+}
+
+/* make answers readable and aligned */
+.q-answers {
+	/* align answers to left and reduce vertical spacing */
+	display: flex;
+	flex-direction: column;
+	gap: 6px; /* mniejszy odstęp między odpowiedziami */
+	margin: 4px 0; /* drobny margines wokół listy odpowiedzi */
+	background-color: transparent;
+	align-items: flex-start; /* wyrównaj do lewej */
+}
+
+.q-answer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start; /* tekst po lewej obok inputu */
+	gap: 10px; /* przestrzeń między inputem a tekstem */
+	padding: 6px 8px; /* bardziej kompaktowy padding */
+	border-radius: 6px;
+	background: transparent; /* mniej "ciężkie" tło */
+	color: #111;
+	font-size: 15px; /* nieco mniejszy, bardziej zwarty */
+	cursor: pointer;
+	transition: background .12s ease;
+	margin: 0; /* usuń duże odstępy zewnętrzne */
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.q-answer:hover {
+	background: rgba(25, 118, 210, 0.05); /* delikatny hover */
+}
+
+/* ensure inputs are visible and accent color set */
+.q-answer input[type="radio"],
+.q-answer input[type="checkbox"] {
+	margin: 0;
+	margin-right: 8px;
+	width: 18px;
+	height: 18px;
+	/* modern browsers: */
+	accent-color: #1976d2;
+	/* fallback visual improvements */
+	outline: none;
+}
+
+/* make sure long texts wrap nicely */
+.q-answer label,
+.q-answer span {
+	color: #111;
+}
+
+/* question actions (buttons) */
+.survey-start-actions, .survey-question-actions, .survey-final-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.btn {
+	padding: 8px 12px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 0.95rem;
+}
+
+.btn-primary {
+	background: #1976d2;
+	color: #fff;
+	border: none;
+}
+
+.btn-secondary {
+	background: #f2f2f2;
+	border: 1px solid #ddd;
+	color: #111;
+}
+
+/* ensure summary list is readable */
+.summary-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.summary-item {
+	border-radius: 6px;
+	padding: 8px;
+	background: #fbfbfb;
+	border: 1px solid #eee;
+}
+
+.survey-error {
+	color: #b00020;
+	padding: 6px 0;
+}
+
+.survey-success {
+	color: #0b7a19;
+	padding: 6px 0;
+}
