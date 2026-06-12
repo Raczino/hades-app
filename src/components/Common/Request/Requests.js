@@ -1,81 +1,83 @@
-export const getArticles = async ({ page = 1, items=1, sort = 'likesCount', order = 'desc' } = {}) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/articles/get/all?page=${page}&size=${items}&sortBy=${sort}&sort=${order}`, {
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
+export const getArticles = async ({ page = 1, items = 1, sort = 'likesCount', order = 'desc' } = {}) => {
+    const response = await interceptedFetch(`${API_URL}/api/v1/articles/get/all?page=${page}&size=${items}&sortBy=${sort}&sort=${order}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         }
-    })
+    });
     if (!response.ok) {
-        throw new Error('Failed to fetch articles', response);
+        throw new Error('Failed to fetch articles');
     }
     return response.json();
 };
 
 export const getArticleById = async (id) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/articles/get?id=${id}`, {
+    const response = await interceptedFetch(`${API_URL}/api/v1/articles/get?id=${id}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         }
-    })
+    });
     if (!response.ok) {
-        throw new Error('Failed to fetch articles', response);
+        throw new Error('Failed to fetch article');
     }
     return response.json();
 };
 
-
 export const addArticle = async (title, content) => {
-    const response = await interceptedFetch('http://localhost:8080/api/v1/articles/add', {
+    const response = await interceptedFetch(`${API_URL}/api/v1/articles/add`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
-            'Accept': '*'
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+            'Accept': 'application/json',
         },
         body: JSON.stringify({ title, content }),
     });
     if (!response.ok) {
-        throw new Error('Failed to insert new article', response);
+        throw new Error('Failed to create article');
     }
 };
 
 export const deleteArticle = async (articleId) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/articles/delete?id=${articleId}`, {
-        method: 'Delete',
+    const response = await interceptedFetch(`${API_URL}/api/v1/articles/delete?id=${articleId}`, {
+        method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
-            'Accept': '*'
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+            'Accept': 'application/json',
         },
     });
     if (!response.ok) {
-        throw new Error('Failed to insert new article', response);
+        throw new Error('Failed to delete article');
     }
+    return response;
 };
 
 export const getUser = async (id) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/users/get?id=${id}`, {
+    const response = await interceptedFetch(`${API_URL}/api/v1/users/get?id=${id}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
     if (!response.ok) {
-        throw new Error('Failed to fetch articles', response);
+        throw new Error('Failed to fetch user');
     }
     return response.json();
 };
 
 export const getArticleForUser = async (id, page = 1, size = 10) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/articles/get/from?userId=${id}&page=${page}&size=${size}&sortBy=postedDate&sort=desc`, {
+    const response = await interceptedFetch(`${API_URL}/api/v1/articles/get/from?userId=${id}&page=${page}&size=${size}&sortBy=postedDate&sort=desc`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
     if (!response.ok) {
@@ -85,11 +87,11 @@ export const getArticleForUser = async (id, page = 1, size = 10) => {
 };
 
 export const getPendingArticlesForUser = async (id, page = 1, size = 10) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/moderator/article/get/from/user?id=${id}&page=${page}&size=${size}&sortBy=postedDate&sort=desc`, {
+    const response = await interceptedFetch(`${API_URL}/api/v1/moderator/article/get/from/user?id=${id}&page=${page}&size=${size}&sortBy=postedDate&sort=desc`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
     if (!response.ok) {
@@ -99,11 +101,11 @@ export const getPendingArticlesForUser = async (id, page = 1, size = 10) => {
 };
 
 export const getCommentsForUser = async (id, page = 1, size = 25) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/comments/for/user?userId=${id}&page=${page}&size=${size}`, {
+    const response = await interceptedFetch(`${API_URL}/api/v1/comments/for/user?userId=${id}&page=${page}&size=${size}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
     if (!response.ok) {
@@ -113,11 +115,11 @@ export const getCommentsForUser = async (id, page = 1, size = 25) => {
 };
 
 export const getFollowersForUser = async (id, offset = 0, limit = 25) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/users/${id}/followers?offset=${offset}&limit=${limit}`, {
+    const response = await interceptedFetch(`${API_URL}/api/v1/users/${id}/followers?offset=${offset}&limit=${limit}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
     if (!response.ok) {
@@ -127,11 +129,11 @@ export const getFollowersForUser = async (id, offset = 0, limit = 25) => {
 };
 
 export const getFollowingForUser = async (id, offset = 0, limit = 25) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/users/${id}/following?offset=${offset}&limit=${limit}`, {
+    const response = await interceptedFetch(`${API_URL}/api/v1/users/${id}/following?offset=${offset}&limit=${limit}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
     if (!response.ok) {
@@ -141,25 +143,24 @@ export const getFollowingForUser = async (id, offset = 0, limit = 25) => {
 };
 
 export const likeArticle = async (articleId) => {
-    const response = await interceptedFetch(`http://localhost:8080/api/v1/articles/like?id=${articleId}`, {
+    const response = await interceptedFetch(`${API_URL}/api/v1/articles/like?id=${articleId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.token}`,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
     });
     if (!response.ok) {
-        throw new Error('Failed to fetch articles');
+        throw new Error('Failed to like article');
     }
     return response.ok;
 };
 
 async function interceptedFetch(url, options) {
-
     const response = await fetch(url, options);
-
-    if (response.status === 401) {
-        window.location = '/login'
+    if (response.status === 401 || response.status === 403) {
+        window.location = '/login';
+        return response;
     }
-    return response
+    return response;
 }

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { getArticleById, likeArticle } from '../../Common/Request/Requests';
 import { getCommentsForArticle } from '../../Common/Request/Comments';
 import { getUser } from '../../Common/Request/Requests';
@@ -13,7 +14,6 @@ const COMMENTS_PER_PAGE = 10;
 
 const ArticleDetails = () => {
     const { articleId } = useParams();
-    const { commentId } = useParams();
     const navigate = useNavigate();
     const [article, setArticle] = useState(null);
     const [author, setAuthor] = useState(null);
@@ -24,37 +24,38 @@ const ArticleDetails = () => {
     const [commentLiked, setCommentLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
     const [commentLikesCount, setCommentLikesCount] = useState(0);
-    const [commentsPerPage, setCommentsPerPage] = useState(COMMENTS_PER_PAGE);
-    const [sortField, setSortField] = useState('likesNumber');
-    const [sortOrder, setSortOrder] = useState('desc');
+    const [commentsPerPage] = useState(COMMENTS_PER_PAGE);
+    const [sortField] = useState('likesNumber');
+    const [sortOrder] = useState('desc');
     const [totalComments, setTotalComments] = useState(0);
 
     useEffect(() => {
+        let mounted = true;
         const fetchArticle = async () => {
             setLoading(true);
             try {
                 const data = await getArticleById(articleId);
+                if (!mounted) return;
                 setArticle(data);
                 setLiked(data.liked || false);
                 setLikesCount(data.likesCount || 0);
                 setCommentLiked(data.commentLiked || false);
                 setCommentLikesCount(data.commentLikesCount || 0);
-                const authorData = await getUser(data.author.id);
-                setAuthor(authorData);
+                if (data.author?.id) {
+                    const authorData = await getUser(data.author.id);
+                    if (mounted) setAuthor(authorData);
+                }
             } catch (error) {
-                setArticle(null);
+                if (mounted) setArticle(null);
             } finally {
-                setLoading(false);
+                if (mounted) setLoading(false);
             }
         };
         fetchArticle();
+        return () => { mounted = false; };
     }, [articleId]);
 
-    useEffect(() => {
-        refreshComments();
-    }, [articleId, currentPage, commentsPerPage, sortField, sortOrder]);
-
-    const refreshComments = async () => {
+    const refreshComments = useCallback(async () => {
         setLoading(true);
         try {
             const params = {
@@ -73,7 +74,11 @@ const ArticleDetails = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [articleId, currentPage, commentsPerPage, sortField, sortOrder]);
+
+    useEffect(() => {
+        refreshComments();
+    }, [refreshComments]);
 
     const paginateComments = (pageNumber) => {
         setCurrentPage(pageNumber);
@@ -89,6 +94,7 @@ const ArticleDetails = () => {
             setLiked(!liked);
             setLikesCount(liked ? likesCount - 1 : likesCount + 1);
         } catch (error) {
+            // ignore
         }
     };
 
@@ -108,9 +114,9 @@ const ArticleDetails = () => {
                 )
             );
         } catch (error) {
-            // obsługa błędu
+            // ignore
         }
-    }
+    };
 
     return (
         <>
@@ -139,12 +145,14 @@ const ArticleDetails = () => {
                                 </button>
                             </div>
                         </div>
-                        <div className="details-content">{article.content}</div>
+                        <div
+                            className="details-content"
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content || '') }}
+                        />
                     </div>
                 )}
                 <div className="details-comments-section">
                     <h2>Komentarze:</h2>
-                    {/* Usuń selecty sortowania i ilości na stronę */}
                     {comments.length > 0 ? (
                         comments.map(comment => (
                             <div key={comment.id} className="details-comment">
@@ -186,4 +194,3 @@ const ArticleDetails = () => {
     );
 };
 export default ArticleDetails;
-

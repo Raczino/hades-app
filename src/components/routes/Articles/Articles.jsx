@@ -9,8 +9,9 @@ import { getCommentsForArticle, likeComment } from '../../Common/Request/Comment
 import Pagination from '../../pagination/Pagination';
 import { FaThumbsUp } from 'react-icons/fa';
 import './Articles.css';
-import { height } from '@mui/system';
 import Search from '../../Common/Search/Search';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const Articles = () => {
     const navigate = useNavigate();
@@ -61,25 +62,28 @@ const Articles = () => {
         fetchArticles();
     }, [currentPage, articlesPerPage, sortField, sortOrder]);
 
-    // NEW: when articles change, fetch up to 3 comments for each visible article (if not loaded)
+    // fetch up to 3 comments for each visible article; abort on article-list change
     useEffect(() => {
+        let cancelled = false;
         articles.forEach((article) => {
             const id = article.id ?? article._id;
             if (!id) return;
-            if (Array.isArray(commentsByArticle[id]) && commentsByArticle[id].length > 0) return; // already loaded
+            if (Array.isArray(commentsByArticle[id]) && commentsByArticle[id].length > 0) return;
 
-            // set loading flag
             setCommentsLoadingByArticle(prev => ({ ...prev, [id]: true }));
-            // try to fetch comments (page 1)
             getCommentsForArticle(id, { page: 1 }).then((data) => {
+                if (cancelled) return;
                 const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
                 setCommentsByArticle(prev => ({ ...prev, [id]: arr.slice(0, 3) }));
             }).catch(() => {
+                if (cancelled) return;
                 setCommentsByArticle(prev => ({ ...prev, [id]: [] }));
             }).finally(() => {
+                if (cancelled) return;
                 setCommentsLoadingByArticle(prev => ({ ...prev, [id]: false }));
             });
         });
+        return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [articles]);
 
@@ -220,7 +224,7 @@ const Articles = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token') || '';
-            const res = await fetch(`http://localhost:8080/api/v1/articles/search?q=${encodeURIComponent(query)}`, {
+            const res = await fetch(`${API_URL}/api/v1/articles/search?q=${encodeURIComponent(query)}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

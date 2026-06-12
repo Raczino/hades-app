@@ -81,7 +81,7 @@ const CreateArticlePage = () => {
 
 		try {
 			setSubmitting(true);
-			await addArticle(payload); // adjust if addArticle signature differs
+			await addArticle(payload.title, payload.content);
 			setTitle('');
 			setEditorContent('');
 			setScheduled('');

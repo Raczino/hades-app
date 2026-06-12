@@ -43,15 +43,18 @@ const Search = ({
 			setOpen((prev) => (prev ? false : prev));
 			return;
 		}
+		let abortController = null;
 		debounceRef.current = setTimeout(async () => {
 			if (fetchSuggestions) {
+				abortController = new AbortController();
 				try {
 					setLoading(true);
-					const res = await fetchSuggestions(value);
+					const res = await fetchSuggestions(value, abortController.signal);
 					if (!mounted.current) return;
 					setItems(Array.isArray(res) ? res : []);
 					setOpen(true);
-				} catch {
+				} catch (err) {
+					if (err?.name === 'AbortError') return;
 					if (mounted.current) setItems([]);
 				} finally {
 					if (mounted.current) setLoading(false);
@@ -71,7 +74,7 @@ const Search = ({
 			setActive(-1);
 		}, debounceMs);
 
-		return () => clearTimeout(debounceRef.current);
+		return () => { clearTimeout(debounceRef.current); if (abortController) abortController.abort(); };
 	}, [value, suggestions, fetchSuggestions, debounceMs]);
 
 	const handleChange = (e) => {

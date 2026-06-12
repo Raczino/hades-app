@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import './CreateComment.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 const CommentForm = ({ articleId, updateComments }) => {
     const [commentContent, setCommentContent] = useState('');
     const [isTextareaActive, setIsTextareaActive] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleCommentChange = (event) => {
         setCommentContent(event.target.value);
@@ -20,12 +23,14 @@ const CommentForm = ({ articleId, updateComments }) => {
     };
 
     const handleSaveComment = async () => {
+        if (isSubmitting || !commentContent.trim()) return;
+        setIsSubmitting(true);
         try {
-            const response = await fetch('http://localhost:8080/api/v1/comments/add', {
+            const response = await fetch(`${API_URL}/api/v1/comments/add`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
                 },
                 body: JSON.stringify({
                     id: articleId,
@@ -43,6 +48,8 @@ const CommentForm = ({ articleId, updateComments }) => {
             }
         } catch (error) {
             console.error('Error saving comment:', error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -70,13 +77,13 @@ const CommentForm = ({ articleId, updateComments }) => {
             />
             {commentContent && (
                 <div className="button-group">
-                    <button className="Comment-cancel" onClick={handleCancelComment}>Cancel</button>
+                    <button className="Comment-cancel" onClick={handleCancelComment} disabled={isSubmitting}>Cancel</button>
                     <button
                         className="Comment-save"
                         onClick={handleSaveComment}
-                        disabled={!commentContent.trim()}
+                        disabled={!commentContent.trim() || isSubmitting}
                     >
-                        Save
+                        {isSubmitting ? 'Saving...' : 'Save'}
                     </button>
                 </div>
             )}

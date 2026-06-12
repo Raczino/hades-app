@@ -51,7 +51,7 @@ const NotificationModal = ({ open, onClose, notifications, highlightedNotificati
                             role="button"
                             tabIndex={0}
                             style={{ cursor: "pointer" }}
-                            onKeyPress={(e) => { if (e.key === 'Enter') typeof onNotificationClick === 'function' && onNotificationClick(notification); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); typeof onNotificationClick === 'function' && onNotificationClick(notification); } }}
                         >
                             <p className="notification-title">{notification.title}</p>
                             <p className="notification-message">{notification.message} <strong>{notification.createdBy}</strong></p>

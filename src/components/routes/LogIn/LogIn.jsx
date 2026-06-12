@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LogIn.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 const LogIn = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
@@ -18,7 +20,7 @@ const LogIn = () => {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/v1/auth/authenticate', {
+      const response = await fetch(`${API_URL}/api/v1/auth/authenticate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -30,6 +32,7 @@ const LogIn = () => {
         const data = await response.json();
         localStorage.setItem('token', data.token);
         localStorage.setItem('userId', data.user.id);
+        setPassword('');
         navigate('/home');
       }
     } catch (err) {
@@ -45,7 +48,7 @@ const LogIn = () => {
     setSuccess('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/v1/registration', {
+      const response = await fetch(`${API_URL}/api/v1/registration`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstName, lastName, email, password }),

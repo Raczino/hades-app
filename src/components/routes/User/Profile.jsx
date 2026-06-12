@@ -9,6 +9,8 @@ import ProfileHeader from './ProfileHeader';
 import NotificationComponent from '../../Common/websockets/NotificationComponent';
 import Pagination from '../../pagination/Pagination';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 const TABS = [
     { key: 'articles', label: 'Artykuły' },
     { key: 'comments', label: 'Komentarze' },
@@ -37,7 +39,6 @@ const Profile = () => {
     const [notificationCount, setNotificationCount] = useState(0);
     const [followersCount, setFollowersCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
-    // pagination state
     const [articlesPage, setArticlesPage] = useState(1);
     const [commentsPage, setCommentsPage] = useState(1);
     const [followersPage, setFollowersPage] = useState(1);
@@ -50,20 +51,22 @@ const Profile = () => {
 
     const loggedInUserId = localStorage.getItem('userId');
 
-    // check if logged-in user is following the profile owner (use endpoint /is-following/{userId})
     useEffect(() => {
+        if (!authorData) return;
+        const me = loggedInUserId;
+        if (!me || String(me) === String(authorData.id)) return;
+
+        let mounted = true;
         const checkFollowing = async () => {
-            if (!authorData) return;
-            const me = loggedInUserId;
-            if (!me || String(me) === String(authorData.id)) return; // owner or not logged in -> no follow button
             try {
-                const response = await fetch(`http://localhost:8080/api/v1/users/is-following/${authorData.id}`, {
+                const response = await fetch(`${API_URL}/api/v1/users/is-following/${authorData.id}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
                     },
                 });
+                if (!mounted) return;
                 if (!response.ok) {
                     console.warn('is-following endpoint returned', response.status);
                     return;
@@ -71,34 +74,38 @@ const Profile = () => {
                 const text = await response.text();
                 let val;
                 try { val = JSON.parse(text); } catch { val = text === 'true'; }
-                setIsFollowing(Boolean(val));
+                if (mounted) setIsFollowing(Boolean(val));
             } catch (err) {
                 console.error('Failed to check following status', err);
             }
         };
         checkFollowing();
+        return () => { mounted = false; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authorData]);
 
     useEffect(() => {
-        const loadAuthorIfNeeded = async () => {
-            const uid = paramUserId || (location.state?.authorData && location.state.authorData.id);
-            if (!uid) return;
-            if (!authorData || String(authorData.id) !== String(uid)) {
-                setLoading(true);
-                try {
-                    const data = await getUser(uid);
-                    setAuthorData(data);
-                    setIsFollowing(data?.isFollowing || false);
-                } catch (err) {
-                    console.error('Error fetching user for profile URL', err);
-                    setAuthorData(null);
-                } finally {
-                    setLoading(false);
-                }
+        const uid = paramUserId || (location.state?.authorData && location.state.authorData.id);
+        if (!uid) return;
+        if (authorData && String(authorData.id) === String(uid)) return;
+
+        let mounted = true;
+        const loadAuthor = async () => {
+            setLoading(true);
+            try {
+                const data = await getUser(uid);
+                if (!mounted) return;
+                setAuthorData(data);
+                setIsFollowing(data?.isFollowing || false);
+            } catch (err) {
+                console.error('Error fetching user for profile URL', err);
+                if (mounted) setAuthorData(null);
+            } finally {
+                if (mounted) setLoading(false);
             }
         };
-        loadAuthorIfNeeded();
+        loadAuthor();
+        return () => { mounted = false; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [paramUserId]);
 
@@ -108,51 +115,57 @@ const Profile = () => {
         } else {
             fetchPendingArticles(articlesPage);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, authorData, articlesPage]);
 
     useEffect(() => {
-        // Pobierz komentarze na wejściu
-        if (activeSideTab === 'comments' && authorData) {
+        if (!authorData) return;
+        let mounted = true;
+
+        if (activeSideTab === 'comments') {
             const fetchComments = async () => {
                 setLoading(true);
                 try {
                     const data = await getCommentsForUser(authorData.id, commentsPage, ITEMS_PER_PAGE);
+                    if (!mounted) return;
                     const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
                     setCommentsData(arr);
                     setTotalComments(Number(data?.meta?.totalItems || arr.length));
                 } catch (error) {
                     console.error('Error fetching comments:', error);
                 } finally {
-                    setLoading(false);
+                    if (mounted) setLoading(false);
                 }
             };
             fetchComments();
         }
-        // Pobierz followers i following na wejściu
-        if (authorData) {
-            const fetchFollowers = async () => {
-                try {
-                    const data = await getFollowersForUser(authorData.id, 0, 25);
-                    const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
-                    setFollowersData(arr);
-                    setTotalFollowers(Number(data?.meta?.totalItems || arr.length));
-                } catch (error) {
-                    setFollowersCount(0);
-                }
-            };
-            const fetchFollowing = async () => {
-                try {
-                    const data = await getFollowingForUser(authorData.id, 0, 25);
-                    const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
-                    setFollowingData(arr);
-                    setTotalFollowing(Number(data?.meta?.totalItems || arr.length));
-                } catch (error) {
-                    setFollowingCount(0);
-                }
-            };
-            fetchFollowers();
-            fetchFollowing();
-        }
+
+        const fetchFollowers = async () => {
+            try {
+                const data = await getFollowersForUser(authorData.id, 0, 25);
+                if (!mounted) return;
+                const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+                setFollowersData(arr);
+                setTotalFollowers(Number(data?.meta?.totalItems || arr.length));
+            } catch (error) {
+                if (mounted) setFollowersCount(0);
+            }
+        };
+        const fetchFollowing = async () => {
+            try {
+                const data = await getFollowingForUser(authorData.id, 0, 25);
+                if (!mounted) return;
+                const arr = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+                setFollowingData(arr);
+                setTotalFollowing(Number(data?.meta?.totalItems || arr.length));
+            } catch (error) {
+                if (mounted) setFollowingCount(0);
+            }
+        };
+        fetchFollowers();
+        fetchFollowing();
+
+        return () => { mounted = false; };
     }, [authorData, activeSideTab, commentsPage, followersPage, followingPage]);
 
     const fetchAcceptedArticles = async (page = 1) => {
@@ -190,12 +203,8 @@ const Profile = () => {
     const handleDeleteCommentClick = async (commentId) => {
         try {
             setLoading(true);
-            const response = await deleteComment(commentId);
-            if (response.ok) {
-                setCommentsData(prev => prev.filter(comment => comment.id !== commentId));
-            } else {
-                console.error('Failed to delete comment:', response);
-            }
+            await deleteComment(commentId);
+            setCommentsData(prev => prev.filter(comment => comment.id !== commentId));
         } catch (error) {
             console.error('Error deleting comment:', error);
         } finally {
@@ -206,13 +215,8 @@ const Profile = () => {
     const handleDeleteClick = async (articleId) => {
         try {
             setLoading(true);
-            const response = await deleteArticle(articleId);
-            if (response.ok) {
-                const updatedArticles = articles.filter(article => article.id !== articleId);
-                setArticles(updatedArticles);
-            } else {
-                console.error('Failed to delete article:', response);
-            }
+            await deleteArticle(articleId);
+            setArticles(prev => prev.filter(article => article.id !== articleId));
         } catch (error) {
             console.error('Error deleting article:', error);
         } finally {
@@ -221,7 +225,6 @@ const Profile = () => {
     };
 
     const handleSideTabClick = async (tabKey) => {
-        // just switch tab and reset page counters; fetches handled by effects
         setActiveSideTab(tabKey);
         if (tabKey === 'comments') setCommentsPage(1);
         if (tabKey === 'followers') setFollowersPage(1);
@@ -231,7 +234,6 @@ const Profile = () => {
 
     const handleTabClick = (tabKey) => {
         setActiveSideTab(tabKey);
-        // Możesz dodać logikę do pobierania danych dla danej zakładki
     };
 
     const logOut = () => {
@@ -253,7 +255,6 @@ const Profile = () => {
 
     const handleFollowClick = async () => {
         if (!authorData) return;
-        // optimistic update
         const prev = isFollowing;
         setIsFollowing(!prev);
         setFollowersCount(c => prev ? Math.max(0, c - 1) : c + 1);
@@ -261,11 +262,11 @@ const Profile = () => {
         setLoading(true);
         try {
             const endpoint = prev ? 'unfollow' : 'follow';
-            const response = await fetch(`http://localhost:8080/api/v1/users/${authorData.id}/${endpoint}`, {
+            const response = await fetch(`${API_URL}/api/v1/users/${authorData.id}/${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.token}`
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
                 },
             });
             if (!response.ok) {
@@ -278,7 +279,6 @@ const Profile = () => {
         } finally {
             setLoading(false);
             if (errorOccurred) {
-                // revert optimistic update
                 setIsFollowing(prev);
                 setFollowersCount(c => prev ? c + 1 : Math.max(0, c - 1));
             }
@@ -388,7 +388,7 @@ const Profile = () => {
                     {activeSideTab === 'articles' && (
                         <div className='articles-list'>
                             <h1 className='list-title'>Lista Artykułów</h1>
-                            {loggedInUserId == authorData.id && (
+                            {String(loggedInUserId) === String(authorData.id) && (
                                 <div className="tabs">
                                     <button
                                         className={activeTab === 'accepted' ? 'tab active' : 'tab'}
@@ -397,15 +397,13 @@ const Profile = () => {
                                     >
                                         Opublikowane
                                     </button>
-                                    {String(loggedInUserId) === String(authorData.id) && (
-                                        <button
-                                            className={activeTab === 'pending' ? 'tab active pending' : 'tab'}
-                                            onClick={() => { setActiveTab('pending'); setArticlesPage(1); }}
-                                            disabled={loading}
-                                        >
-                                            Oczekujące
-                                        </button>
-                                    )}
+                                    <button
+                                        className={activeTab === 'pending' ? 'tab active pending' : 'tab'}
+                                        onClick={() => { setActiveTab('pending'); setArticlesPage(1); }}
+                                        disabled={loading}
+                                    >
+                                        Oczekujące
+                                    </button>
                                 </div>
                             )}
                             {articles.length > 0 ? (

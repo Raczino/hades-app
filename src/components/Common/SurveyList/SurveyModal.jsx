@@ -1,19 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './SurveyModal.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 const SurveyModal = ({ survey, onClose = () => { } }) => {
-    const [page, setPage] = useState(-1); // -1 = start screen, 0..n-1 = questions, n = final screen
-    const [answers, setAnswers] = useState({}); // { [questionId]: [answerId,...] } for choice questions
+    const [page, setPage] = useState(-1);
+    const [answers, setAnswers] = useState({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+    const isMountedRef = useRef(true);
+    const closeTimerRef = useRef(null);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+            if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+        };
+    }, []);
 
     if (!survey) return null;
 
     const questions = Array.isArray(survey.questions) ? survey.questions : [];
 
     const close = () => {
-        // reset state when closing
         setPage(-1);
         setAnswers({});
         setError(null);
@@ -24,7 +35,6 @@ const SurveyModal = ({ survey, onClose = () => { } }) => {
 
     const ensureArray = (v) => {
         const arr = Array.isArray(v) ? v : v ? [v] : [];
-        // normalizuj wszystkie elementy do stringów dla spójnych porównań
         return arr.map((x) => (x === null || x === undefined) ? String(x) : String(x));
     };
 
@@ -42,39 +52,25 @@ const SurveyModal = ({ survey, onClose = () => { } }) => {
         setAnswers((prev) => ({ ...prev, [qId]: [String(answerId)] }));
     };
 
-    // NEW: sprawdź, czy pojedyncze pytanie spełnia reguły (min/max/required)
     const isQuestionValid = (q) => {
         if (!q) return true;
         const selected = ensureArray(answers[q.id]);
         const len = selected.length;
-        // required flag
-        if (q.required) {
-            if (len === 0) return false;
-        }
-        // minSelected
-        if (typeof q.minSelected === 'number' && q.minSelected > 0) {
-            if (len < q.minSelected) return false;
-        }
-        // maxSelected
-        if (typeof q.maxSelected === 'number' && q.maxSelected > 0) {
-            if (len > q.maxSelected) return false;
-        }
-        // if none of the rules block, it's valid
+        if (q.required && len === 0) return false;
+        if (typeof q.minSelected === 'number' && q.minSelected > 0 && len < q.minSelected) return false;
+        if (typeof q.maxSelected === 'number' && q.maxSelected > 0 && len > q.maxSelected) return false;
         return true;
     };
 
-    // NEW: czy bieżące pytanie jest ok (używane do disabled Next)
     const isCurrentValid = () => {
-        if (page < 0) return true; // start screen
+        if (page < 0) return true;
         const q = questions[page];
         if (!q) return true;
         return isQuestionValid(q);
     };
 
-    // NEW: czy wszystkie wymagane pytania są uzupełnione (używane do disabled Wyślij)
     const allRequiredValid = () => {
         for (const q of questions) {
-            // jeśli pytanie jest required lub ma minSelected>0 traktujemy jak wymagane
             const requiredTreat = q.required || (typeof q.minSelected === 'number' && q.minSelected > 0);
             if (requiredTreat && !isQuestionValid(q)) return false;
         }
@@ -86,9 +82,7 @@ const SurveyModal = ({ survey, onClose = () => { } }) => {
         const q = questions[page];
         if (!q) return true;
         const selected = ensureArray(answers[q.id]);
-        if (q.required) {
-            if (selected.length === 0) return { ok: false, msg: 'To pytanie jest wymagane.' };
-        }
+        if (q.required && selected.length === 0) return { ok: false, msg: 'To pytanie jest wymagane.' };
         if (q.type === 'MULTIPLE_CHOICE') {
             if (q.minSelected && selected.length < q.minSelected) return { ok: false, msg: `Wybierz co najmniej ${q.minSelected} odpowiedzi.` };
             if (q.maxSelected && selected.length > q.maxSelected) return { ok: false, msg: `Możesz wybrać maksymalnie ${q.maxSelected} odpowiedzi.` };
@@ -105,69 +99,47 @@ const SurveyModal = ({ survey, onClose = () => { } }) => {
         }
         setPage((p) => {
             if (p < questions.length - 1) return p + 1;
-            // go to final screen
             return questions.length;
         });
     };
 
     const onBack = () => {
         setError(null);
-        if (page === -1) {
-            close();
-            return;
-        }
-        if (page === 0) {
-            setPage(() => -1);
-            return;
-        }
+        if (page === -1) { close(); return; }
+        if (page === 0) { setPage(-1); return; }
         setPage((p) => p - 1);
     };
 
-    // build payload in shape required by backend:
-    // { surveyId, userId, answerResponses: [ { questionId, answerValues: [...] } ] }
     const buildPayload = () => {
-        // try numeric userId first, fallback to raw string
         const rawUserId = localStorage.getItem('userId');
         const userIdNum = rawUserId ? Number(rawUserId) : null;
         const userId = userIdNum && !Number.isNaN(userIdNum) ? userIdNum : rawUserId;
 
         const answerResponses = questions.map((q) => {
-            const selected = ensureArray(answers[q.id]); // array of string ids or values
+            const selected = ensureArray(answers[q.id]);
             let answerValues = [];
-
-            // if question has predefined answers, map selected ids -> answer.value
             if (Array.isArray(q.answers) && q.answers.length > 0) {
                 answerValues = selected.map((sel) => {
                     const opt = q.answers.find((a) => String(a.id) === String(sel));
-                    // if found, use its value (text), otherwise send the raw selected value
                     return opt ? (opt.value ?? String(sel)) : String(sel);
                 });
             } else {
-                // free-text or other types: assume selected already contains the entered value(s)
                 answerValues = selected.map((v) => String(v));
             }
-
-            return {
-                questionId: q.id,
-                answerValues,
-            };
+            return { questionId: q.id, answerValues };
         });
 
-        return {
-            surveyId: survey.id,
-            userId,
-            answerResponses,
-        };
+        return { surveyId: survey.id, userId, answerResponses };
     };
 
     const onSend = async () => {
+        if (!isMountedRef.current) return;
         setLoading(true);
         setError(null);
         try {
             const token = localStorage.getItem('token') || '';
             const payload = buildPayload();
-            // ADJUST endpoint if necessary (kept existing endpoint)
-            const res = await fetch(`http://localhost:8080/api/v1/survey-response/post`, {
+            const res = await fetch(`${API_URL}/api/v1/survey-response/post`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -175,30 +147,28 @@ const SurveyModal = ({ survey, onClose = () => { } }) => {
                 },
                 body: JSON.stringify(payload),
             });
+            if (!isMountedRef.current) return;
             if (!res.ok) {
                 const text = await res.text();
                 throw new Error(`HTTP ${res.status} ${text}`);
             }
             setSuccess(true);
-            // optionally wait a moment and close
-            setTimeout(() => {
-                close();
+            closeTimerRef.current = setTimeout(() => {
+                if (isMountedRef.current) close();
             }, 900);
         } catch (err) {
-            setError(err.message || 'Send error');
+            if (isMountedRef.current) setError(err.message || 'Send error');
         } finally {
-            setLoading(false);
+            if (isMountedRef.current) setLoading(false);
         }
     };
 
-    // UI blocks
     const renderStart = () => (
         <div className="survey-start">
             <h3 className='survey-title'>{survey.title || ''}</h3>
             <p className='survey-title'>Autor: {survey.author?.firstName ? `${survey.author.firstName} ${survey.author.lastName || ''}` : '—'}</p>
             <p className='survey-title'>{survey.description || ''}</p>
             <div className="survey-start-actions">
-                {/* only one Next button on the start screen; modal can still be closed via header X */}
                 <button type="button" className="btn btn-primary" onClick={() => setPage(0)}>Next</button>
             </div>
         </div>
@@ -250,10 +220,7 @@ const SurveyModal = ({ survey, onClose = () => { } }) => {
                         );
                     })}
                 </div>
-
-                {/* pokazuj informacje o min/max i liczbie wybranych */}
                 {requirementText}
-
                 <div className="survey-question-actions">
                     <button type="button" className="btn btn-secondary" onClick={onBack}>Back</button>
                     <button type="button" className="btn btn-primary" onClick={onNext} disabled={!isCurrentValid()}>Next</button>
@@ -294,7 +261,6 @@ const SurveyModal = ({ survey, onClose = () => { } }) => {
             <div className="survey-modal">
                 <header
                     className="survey-modal-header"
-                    // make header a positioning context for the close button
                     style={{ position: 'relative' }}
                 >
                     <h2>Survey</h2>

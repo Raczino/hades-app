@@ -2,29 +2,28 @@ import React, { useEffect, useState } from 'react';
 import './SurveyList.css';
 import SurveyModal from './SurveyModal';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 const SurveyList = ({
     surveys: initialSurveys = null,
     title = 'Surveys',
     onOpen = () => { },
     userId: propUserId = null,
-    page = 1,               // kept for backward compatibility (initial page)
-    pageSize = 6,           // default size changed to 6
+    page = 1,
+    pageSize = 6,
 }) => {
-    // surveys state
     const [surveys, setSurveys] = useState(Array.isArray(initialSurveys) ? initialSurveys : []);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedSurvey, setSelectedSurvey] = useState(null);
 
-    // pagination state (1-based page)
     const [currentPage, setCurrentPage] = useState(Number(page) || 1);
-    const [size] = useState(Number(pageSize) || 6); // fixed default size
+    const [size] = useState(Number(pageSize) || 6);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
 
     useEffect(() => {
-        // jeśli przekazano surveys i nie jest pusta, użyj ich (nie robimy fetch)
         if (Array.isArray(initialSurveys) && initialSurveys.length > 0) {
             setSurveys(initialSurveys);
             setTotalPages(1);
@@ -32,20 +31,19 @@ const SurveyList = ({
             return;
         }
 
-        // determine userId: prop first, then localStorage
         const uid = propUserId ?? localStorage.getItem('userId');
         if (!uid) {
             setError('No userId available for fetching surveys');
             return;
         }
 
-        // fetch from backend using follows endpoint for given user with pagination + fixed sort
+        let cancelled = false;
         const fetchSurveys = async () => {
             setLoading(true);
             setError(null);
             try {
                 const token = localStorage.getItem('token') || '';
-                const url = `http://localhost:8080/api/v1/surveys/get/from/follows?userId=${encodeURIComponent(uid)}&page=${encodeURIComponent(currentPage)}&size=${encodeURIComponent(size)}&sortBy=createdAt&sortDirection=DESC`;
+                const url = `${API_URL}/api/v1/surveys/get/from/follows?userId=${encodeURIComponent(uid)}&page=${encodeURIComponent(currentPage)}&size=${encodeURIComponent(size)}&sortBy=createdAt&sortDirection=DESC`;
                 const res = await fetch(url, {
                     method: 'GET',
                     headers: {
@@ -53,31 +51,32 @@ const SurveyList = ({
                         'Authorization': token ? `Bearer ${token}` : '',
                     },
                 });
+                if (cancelled) return;
                 if (!res.ok) {
                     throw new Error(`HTTP ${res.status}`);
                 }
                 const data = await res.json();
-                // backend zwraca { items: [...], meta: { totalPages, totalItems, pageSize, currentPage } }
+                if (cancelled) return;
                 const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
                 setSurveys(items);
-                // read meta if exists
                 if (data?.meta) {
                     setTotalPages(Number(data.meta.totalPages) || 1);
                     setTotalItems(Number(data.meta.totalItems) || items.length || 0);
                 } else {
-                    // fallback: if we received less than size, compute pages as 1
                     setTotalPages(items.length < size ? 1 : Math.ceil(items.length / size));
                     setTotalItems(items.length);
                 }
             } catch (err) {
+                if (cancelled) return;
                 setError(err.message || 'Fetch error');
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
         fetchSurveys();
-    }, [initialSurveys, propUserId, /*page,*/ /*pageSize,*/ currentPage, size]);
-    // reset page when userId changes
+        return () => { cancelled = true; };
+    }, [initialSurveys, propUserId, currentPage, size]);
+
     useEffect(() => {
         setCurrentPage(Number(page) || 1);
     }, [propUserId, page]);
@@ -85,7 +84,6 @@ const SurveyList = ({
     const openSurveyModal = (s) => {
         setSelectedSurvey(s);
         setModalOpen(true);
-        // keep backward compatibility: still notify parent if it passed onOpen
         try { onOpen(s); } catch (e) { /* ignore */ }
     };
 
@@ -102,7 +100,7 @@ const SurveyList = ({
             return iso;
         }
     };
-    // slider controls -> zmieniają stronę (wyzwolą fetch w useEffect)
+
     const handlePrev = () => {
         setCurrentPage((p) => Math.max(1, p - 1));
     };
@@ -124,7 +122,6 @@ const SurveyList = ({
                     className="survey-tiles-slider"
                     style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
                 >
-                    {/* left arrow */}
                     <button
                         type="button"
                         className="slider-arrow left"
@@ -188,7 +185,6 @@ const SurveyList = ({
                         ))}
                     </div>
 
-                    {/* right arrow */}
                     <button
                         type="button"
                         className="slider-arrow right"

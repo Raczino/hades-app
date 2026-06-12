@@ -1,9 +1,11 @@
 import axios from 'axios';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 export const markNotificationAsRead = async (notificationId) => {
     try {
-        const response = await axios.put(
-            `http://localhost:8080/api/v1/notification/read?id=${notificationId}`,
+        await axios.put(
+            `${API_URL}/api/v1/notification/read?id=${notificationId}`,
             {},
             {
                 headers: {
@@ -12,11 +14,9 @@ export const markNotificationAsRead = async (notificationId) => {
                 }
             }
         );
-        if (response.status === 401 || response.status === 403) {
+    } catch (error) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
             window.location = '/login';
         }
-        console.log(`Notification ${notificationId} marked as read.`);
-    } catch (error) {
-        console.error('Error marking notification as read:', error);
     }
 };
